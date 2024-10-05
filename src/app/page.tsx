@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import ChatInput from "~/components/ChatInput";
+import React from 'react';
 
 const ChatterBox = dynamic(() => import("~/components/ChatterBox"), { ssr: false });
 const Model = dynamic(() => import("~/components/Model"), { ssr: false });
