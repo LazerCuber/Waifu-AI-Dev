@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import ChatInput from "~/components/ChatInput";
+import React from 'react';
 
 const ChatterBox = dynamic(() => import("~/components/ChatterBox"), { ssr: false });
 const Model = dynamic(() => import("~/components/Model"), { ssr: false });
@@ -28,18 +29,22 @@ export default function Page() {
     };
   }, []);
 
+  const renderContents = useMemo(() => {
+    return live2dLoaded && (
+      <>
+        <ChatterBox />
+        <Model />
+      </>
+    );
+  }, [live2dLoaded]);
+
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
       <Background />
       <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
         <ChatInput />
         <div className="h-screen flex justify-center items-center w-full">
-          {live2dLoaded && (
-            <>
-              <ChatterBox />
-              <Model />
-            </>
-          )}
+          {renderContents}
         </div>
       </div>
     </main>
