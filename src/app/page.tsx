@@ -21,7 +21,9 @@ export default function Page() {
     const script = document.createElement('script');
     script.src = '/live2dcubismcore.min.js';
     script.defer = true;
-    script.onload = () => setLive2dLoaded(true);
+    script.onload = () => {
+      setLive2dLoaded(true);
+    };
     document.body.appendChild(script);
 
     return () => {
