@@ -16,6 +16,11 @@ const preloadModules = async () => {
   Live2DModel = module.Live2DModel;
 };
 
+const preloadModel = async () => {
+  await preloadModules();
+  return await Live2DModel.from("/model/vanilla/vanilla.model3.json");
+};
+
 const Model: React.FC = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
@@ -49,12 +54,12 @@ const Model: React.FC = memo(() => {
     const model = modelRef.current;
     if (model) {
       const now = Date.now();
-      const factor = Math.max(0, Math.min((now - mouseMoveRef.current.last - RECENTER_DELAY) / 1000, 1)); 
+      const factor = Math.max(0, Math.min((now - mouseMoveRef.current.last - RECENTER_DELAY) / 1000, 1));
       const easeFactor = Math.sin(Math.PI * factor / 2);
       mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS;
       mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
-      
+
       const breathingFactor = Math.sin(now * 0.001) * 0.02;
       model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
     }
@@ -73,7 +78,6 @@ const Model: React.FC = memo(() => {
     const ticker = new PIXI.Ticker();
 
     (async () => {
-      await preloadModules();
       const app = new PIXI.Application({
         view: canvasRef.current!,
         backgroundAlpha: 0,
@@ -83,7 +87,7 @@ const Model: React.FC = memo(() => {
       });
       appRef.current = app;
 
-      modelRef.current = await Live2DModel.from("/model/vanilla/vanilla.model3.json");
+      modelRef.current = await preloadModel();
       app.stage.addChild(modelRef.current);
       modelRef.current.anchor.set(0.5, 0.78);
       updateModelSize();
