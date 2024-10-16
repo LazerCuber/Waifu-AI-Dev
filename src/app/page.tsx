@@ -18,21 +18,14 @@ export default function Page() {
   const [live2dLoaded, setLive2dLoaded] = useState(false);
 
   useEffect(() => {
-    const loadLive2DModel = async () => {
-      const script = document.createElement('script');
-      script.src = '/live2dcubismcore.min.js';
-      script.defer = true;
-      script.onload = () => setLive2dLoaded(true);
-      document.body.appendChild(script);
-    };
-
-    loadLive2DModel();
+    const script = document.createElement('script');
+    script.src = '/live2dcubismcore.min.js';
+    script.defer = true;
+    script.onload = () => setLive2dLoaded(true);
+    document.body.appendChild(script);
 
     return () => {
-      const script = document.querySelector('script[src="/live2dcubismcore.min.js"]');
-      if (script) {
-        document.body.removeChild(script);
-      }
+      document.body.removeChild(script);
     };
   }, []);
 
