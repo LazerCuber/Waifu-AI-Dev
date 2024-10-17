@@ -43,7 +43,7 @@ export default function Page() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
       <Background />
-      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
+      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full slideUp">
         <ChatInput />
         <div className="h-screen flex justify-center items-center w-full">
           {renderContents}
