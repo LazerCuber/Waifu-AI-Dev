@@ -1,6 +1,6 @@
 "use client";
 import * as PIXI from "pixi.js";
-import React, { useEffect, useRef, useCallback, memo } from "react";
+import React, { useEffect, useRef, useCallback, memo, useState } from "react";
 import { useAtomValue } from "jotai";
 import { lastMessageAtom } from "~/atoms/ChatAtom";
 
@@ -24,6 +24,7 @@ const preloadModel = async () => {
 const Model: React.FC = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
+  const [modelLoaded, setModelLoaded] = useState(false);
   const modelRef = useRef<any>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
@@ -59,9 +60,6 @@ const Model: React.FC = memo(() => {
       mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS;
       mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
-
-      const breathingFactor = Math.sin(now * 0.001) * 0.02;
-      model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
     }
   }, []);
 
@@ -91,6 +89,7 @@ const Model: React.FC = memo(() => {
       app.stage.addChild(modelRef.current);
       modelRef.current.anchor.set(0.5, 0.78);
       updateModelSize();
+      setModelLoaded(true);
 
       const handleMouseMove = (event: MouseEvent) => {
         window.requestAnimationFrame(() => onMouseMove(event));
@@ -120,7 +119,7 @@ const Model: React.FC = memo(() => {
   }, [onMouseMove, updateModelSize, updateHeadPosition, updateBodyPosition]);
 
   useEffect(() => {
-    if (lastMessage?.role === 'assistant' && modelRef.current) {
+    if (lastMessage?.role === 'assistant' && modelRef.current && modelLoaded) {
       const duration = lastMessage.content.length * 55;
       const startTime = performance.now();
       const animate = (time: number) => {
@@ -131,7 +130,7 @@ const Model: React.FC = memo(() => {
       };
       requestAnimationFrame(animate);
     }
-  }, [lastMessage]);
+  }, [lastMessage, modelLoaded]);
 
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
 });
