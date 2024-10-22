@@ -1,4 +1,3 @@
-"use client";
 import * as PIXI from "pixi.js";
 import React, { useEffect, useRef, useCallback, memo, useState } from "react";
 import { useAtomValue } from "jotai";
