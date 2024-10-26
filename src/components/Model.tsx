@@ -1,9 +1,9 @@
 import * as PIXI from "pixi.js";
-import React, { useEffect, useRef, useCallback, memo, useState } from "react";
+import React, { useEffect, useRef, useCallback, memo } from "react";
 import { useAtomValue } from "jotai";
 import { lastMessageAtom } from "~/atoms/ChatAtom";
 
-if (typeof window !== "undefined") (window as any).PIXI = PIXI;
+if (typeof window!== "undefined") (window as any).PIXI = PIXI;
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 let Live2DModel: any;
@@ -23,7 +23,6 @@ const preloadModel = async () => {
 const Model: React.FC = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
-  const [modelLoaded, setModelLoaded] = useState(false);
   const modelRef = useRef<any>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
@@ -88,10 +87,9 @@ const Model: React.FC = memo(() => {
       app.stage.addChild(modelRef.current);
       modelRef.current.anchor.set(0.5, 0.78);
       updateModelSize();
-      setModelLoaded(true);
 
       const handleMouseMove = (event: MouseEvent) => {
-        window.requestAnimationFrame(() => onMouseMove(event));
+        onMouseMove(event);
       };
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
@@ -118,18 +116,18 @@ const Model: React.FC = memo(() => {
   }, [onMouseMove, updateModelSize, updateHeadPosition, updateBodyPosition]);
 
   useEffect(() => {
-    if (lastMessage?.role === 'assistant' && modelRef.current && modelLoaded) {
+    if (lastMessage?.role === 'assistant' && modelRef.current) {
       const duration = lastMessage.content.length * 55;
       const startTime = performance.now();
       const animate = (time: number) => {
         const elapsed = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
-          elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
+          elapsed < duration? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
         if (elapsed < duration) requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
     }
-  }, [lastMessage, modelLoaded]);
+  }, [lastMessage]);
 
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
 });
