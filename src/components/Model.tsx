@@ -20,14 +20,6 @@ const preloadModel = async () => {
   return await Live2DModel.from("/model/vanilla/vanilla.model3.json");
 };
 
-const debounce = (func: Function, wait: number) => {
-  let timeout: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-};
-
 const Model: React.FC = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
@@ -57,7 +49,7 @@ const Model: React.FC = memo(() => {
     }
   }, []);
 
-  const updateHeadPosition = useCallback(() => {
+  const updateModel = useCallback(() => {
     const model = modelRef.current;
     if (model) {
       const now = Date.now();
@@ -66,21 +58,13 @@ const Model: React.FC = memo(() => {
       mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS;
       mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
-    }
-  }, []);
 
-  const updateBodyPosition = useCallback(() => {
-    const model = modelRef.current;
-    if (model) {
-      const now = Date.now();
       const breathingFactor = Math.sin(now * 0.001) * 0.02;
       model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
     }
   }, []);
 
   useEffect(() => {
-    const ticker = new PIXI.Ticker();
-
     (async () => {
       const app = new PIXI.Application({
         view: canvasRef.current!,
@@ -102,17 +86,16 @@ const Model: React.FC = memo(() => {
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
       const animate = () => {
-        updateHeadPosition();
-        updateBodyPosition();
+        updateModel();
         app.render();
         requestAnimationFrame(animate);
       };
-      requestAnimationFrame(animate);
+      animate();
 
-      const handleResize = debounce(() => {
+      const handleResize = () => {
         app.renderer.resize(window.innerWidth, window.innerHeight);
         updateModelSize();
-      }, 100);
+      };
       window.addEventListener('resize', handleResize);
 
       return () => {
@@ -121,7 +104,7 @@ const Model: React.FC = memo(() => {
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
-  }, [onMouseMove, updateModelSize, updateHeadPosition, updateBodyPosition]);
+  }, [onMouseMove, updateModelSize]);
 
   useEffect(() => {
     if (lastMessage?.role === 'assistant' && modelRef.current) {
