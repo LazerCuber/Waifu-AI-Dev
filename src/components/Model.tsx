@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useCallback, memo } from "react";
 import { useAtomValue } from "jotai";
 import { lastMessageAtom } from "~/atoms/ChatAtom";
 
-if (typeof window!== "undefined") (window as any).PIXI = PIXI;
+if (typeof window !== "undefined") (window as any).PIXI = PIXI;
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 let Live2DModel: any;
@@ -18,6 +18,14 @@ const preloadModules = async () => {
 const preloadModel = async () => {
   await preloadModules();
   return await Live2DModel.from("/model/vanilla/vanilla.model3.json");
+};
+
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
 };
 
 const Model: React.FC = memo(() => {
@@ -93,23 +101,23 @@ const Model: React.FC = memo(() => {
       };
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-      ticker.add(() => {
+      const animate = () => {
         updateHeadPosition();
         updateBodyPosition();
         app.render();
-      });
-      ticker.start();
+        requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
 
-      const handleResize = () => {
+      const handleResize = debounce(() => {
         app.renderer.resize(window.innerWidth, window.innerHeight);
         updateModelSize();
-      };
+      }, 100);
       window.addEventListener('resize', handleResize);
 
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
-        ticker.stop();
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
@@ -122,7 +130,7 @@ const Model: React.FC = memo(() => {
       const animate = (time: number) => {
         const elapsed = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
-          elapsed < duration? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
+          elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
         if (elapsed < duration) requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
