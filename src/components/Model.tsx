@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useCallback, memo } from "react";
 import { useAtomValue } from "jotai";
 import { lastMessageAtom } from "~/atoms/ChatAtom";
 
-if (typeof window !== "undefined") (window as any).PIXI = PIXI;
+if (typeof window!== "undefined") (window as any).PIXI = PIXI;
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 let Live2DModel: any;
@@ -49,7 +49,7 @@ const Model: React.FC = memo(() => {
     }
   }, []);
 
-  const updateModel = useCallback(() => {
+  const updateHeadPosition = useCallback(() => {
     const model = modelRef.current;
     if (model) {
       const now = Date.now();
@@ -58,13 +58,21 @@ const Model: React.FC = memo(() => {
       mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS;
       mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
+    }
+  }, []);
 
+  const updateBodyPosition = useCallback(() => {
+    const model = modelRef.current;
+    if (model) {
+      const now = Date.now();
       const breathingFactor = Math.sin(now * 0.001) * 0.02;
       model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
     }
   }, []);
 
   useEffect(() => {
+    const ticker = new PIXI.Ticker();
+
     (async () => {
       const app = new PIXI.Application({
         view: canvasRef.current!,
@@ -85,12 +93,12 @@ const Model: React.FC = memo(() => {
       };
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-      const animate = () => {
-        updateModel();
+      ticker.add(() => {
+        updateHeadPosition();
+        updateBodyPosition();
         app.render();
-        requestAnimationFrame(animate);
-      };
-      animate();
+      });
+      ticker.start();
 
       const handleResize = () => {
         app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -101,10 +109,11 @@ const Model: React.FC = memo(() => {
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
+        ticker.stop();
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
-  }, [onMouseMove, updateModelSize]);
+  }, [onMouseMove, updateModelSize, updateHeadPosition, updateBodyPosition]);
 
   useEffect(() => {
     if (lastMessage?.role === 'assistant' && modelRef.current) {
@@ -113,7 +122,7 @@ const Model: React.FC = memo(() => {
       const animate = (time: number) => {
         const elapsed = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
-          elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
+          elapsed < duration? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
         if (elapsed < duration) requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
