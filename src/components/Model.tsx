@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useCallback, memo } from "react";
 import { useAtomValue } from "jotai";
 import { lastMessageAtom } from "~/atoms/ChatAtom";
 
-if (typeof window !== "undefined") (window as any).PIXI = PIXI;
+if (typeof window!== "undefined") (window as any).PIXI = PIXI;
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 let Live2DModel: any;
@@ -26,7 +26,6 @@ const Model: React.FC = memo(() => {
   const modelRef = useRef<any>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
-  const tickerRef = useRef<PIXI.Ticker | null>(null);
 
   const updateModelSize = useCallback(() => {
     const model = modelRef.current;
@@ -73,7 +72,6 @@ const Model: React.FC = memo(() => {
 
   useEffect(() => {
     const ticker = new PIXI.Ticker();
-    tickerRef.current = ticker;
 
     (async () => {
       const app = new PIXI.Application({
@@ -90,7 +88,10 @@ const Model: React.FC = memo(() => {
       modelRef.current.anchor.set(0.5, 0.78);
       updateModelSize();
 
-      window.addEventListener('mousemove', onMouseMove, { passive: true });
+      const handleMouseMove = (event: MouseEvent) => {
+        onMouseMove(event);
+      };
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
       ticker.add(() => {
         updateHeadPosition();
@@ -99,40 +100,32 @@ const Model: React.FC = memo(() => {
       });
       ticker.start();
 
-      window.addEventListener('resize', updateModelSize);
+      const handleResize = () => {
+        app.renderer.resize(window.innerWidth, window.innerHeight);
+        updateModelSize();
+      };
+      window.addEventListener('resize', handleResize);
 
       return () => {
-        window.removeEventListener('resize', updateModelSize);
-        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('mousemove', handleMouseMove);
         ticker.stop();
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
-
-    return () => {
-      tickerRef.current?.stop();
-    };
   }, [onMouseMove, updateModelSize, updateHeadPosition, updateBodyPosition]);
 
   useEffect(() => {
     if (lastMessage?.role === 'assistant' && modelRef.current) {
       const duration = lastMessage.content.length * 55;
       const startTime = performance.now();
-      let animationFrameId: number;
-
       const animate = (time: number) => {
         const elapsed = time - startTime;
-        const mouthOpenY = elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0;
-        modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY', mouthOpenY);
-
-        if (elapsed < duration) {
-          animationFrameId = requestAnimationFrame(animate);
-        }
+        modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
+          elapsed < duration? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
+        if (elapsed < duration) requestAnimationFrame(animate);
       };
-
-      animationFrameId = requestAnimationFrame(animate);
-
-      return () => cancelAnimationFrame(animationFrameId);
+      requestAnimationFrame(animate);
     }
   }, [lastMessage]);
 
