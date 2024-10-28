@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useCallback, memo } from "react";
 import { useAtomValue } from "jotai";
 import { lastMessageAtom } from "~/atoms/ChatAtom";
 
-if (typeof window!== "undefined") (window as any).PIXI = PIXI;
+if (typeof window !== "undefined") (window as any).PIXI = PIXI;
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 let Live2DModel: any;
@@ -110,6 +110,8 @@ const Model: React.FC = memo(() => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
         ticker.stop();
+        app.stage.removeChild(modelRef.current);
+        modelRef.current = null;
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
@@ -122,7 +124,7 @@ const Model: React.FC = memo(() => {
       const animate = (time: number) => {
         const elapsed = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
-          elapsed < duration? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
+          elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
         if (elapsed < duration) requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
