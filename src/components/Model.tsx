@@ -26,6 +26,7 @@ const Model: React.FC = memo(() => {
   const modelRef = useRef<any>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
+  const animationFrameIdRef = useRef<number | null>(null); // Declare useRef for animationFrameId
 
   const updateModelSize = useCallback(() => {
     const model = modelRef.current;
@@ -72,6 +73,7 @@ const Model: React.FC = memo(() => {
 
   useEffect(() => {
     const ticker = new PIXI.Ticker();
+    let animationFrameId: number;
 
     (async () => {
       const app = new PIXI.Application({
@@ -111,6 +113,7 @@ const Model: React.FC = memo(() => {
         window.removeEventListener('mousemove', handleMouseMove);
         ticker.stop();
         app.destroy(true, { children: true, texture: true, baseTexture: true });
+        cancelAnimationFrame(animationFrameIdRef.current!); // Use the ref to cancel animation frame
       };
     })();
   }, [onMouseMove, updateModelSize, updateHeadPosition, updateBodyPosition]);
@@ -122,10 +125,10 @@ const Model: React.FC = memo(() => {
       const animate = (time: number) => {
         const elapsed = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
-          elapsed < duration? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
-        if (elapsed < duration) requestAnimationFrame(animate);
+          elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
+        if (elapsed < duration) animationFrameIdRef.current = requestAnimationFrame(animate); // Use the ref
       };
-      requestAnimationFrame(animate);
+      animationFrameIdRef.current = requestAnimationFrame(animate); // Use the ref
     }
   }, [lastMessage]);
 
