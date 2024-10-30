@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useCallback, memo } from "react";
 import { useAtomValue } from "jotai";
 import { lastMessageAtom } from "~/atoms/ChatAtom";
 
-if (typeof window!== "undefined") (window as any).PIXI = PIXI;
+if (typeof window !== "undefined") (window as any).PIXI = PIXI;
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 let Live2DModel: any;
@@ -70,9 +70,14 @@ const Model: React.FC = memo(() => {
     }
   }, []);
 
-  useEffect(() => {
-    const ticker = new PIXI.Ticker();
+  const renderLoop = useCallback(() => {
+    updateHeadPosition();
+    updateBodyPosition();
+    appRef.current?.render();
+    requestAnimationFrame(renderLoop);
+  }, [updateHeadPosition, updateBodyPosition]);
 
+  useEffect(() => {
     (async () => {
       const app = new PIXI.Application({
         view: canvasRef.current!,
@@ -93,12 +98,7 @@ const Model: React.FC = memo(() => {
       };
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-      ticker.add(() => {
-        updateHeadPosition();
-        updateBodyPosition();
-        app.render();
-      });
-      ticker.start();
+      renderLoop();
 
       const handleResize = () => {
         app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -109,11 +109,10 @@ const Model: React.FC = memo(() => {
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
-        ticker.stop();
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
-  }, [onMouseMove, updateModelSize, updateHeadPosition, updateBodyPosition]);
+  }, [onMouseMove, updateModelSize, renderLoop]);
 
   useEffect(() => {
     if (lastMessage?.role === 'assistant' && modelRef.current) {
@@ -122,7 +121,7 @@ const Model: React.FC = memo(() => {
       const animate = (time: number) => {
         const elapsed = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
-          elapsed < duration? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
+          elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
         if (elapsed < duration) requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
