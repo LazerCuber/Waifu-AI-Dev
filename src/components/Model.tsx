@@ -1,26 +1,26 @@
-import * as PIXI from "pixi.js";
-import React, { useEffect, useRef, useCallback, memo } from "react";
-import { useAtomValue } from "jotai";
-import { lastMessageAtom } from "~/atoms/ChatAtom";
+import * as PIXI from 'pixi.js';
+import { Application } from 'pixi.js';
+import { useAtomValue, useAtom } from 'jotai';
+import { lastMessageAtom } from '~/atoms/ChatAtom';
+import React, { useEffect, useRef, useCallback, memo } from 'react';
+import { Live2DModel } from 'pixi-live2d-display/cubism4';
 
-if (typeof window !== "undefined") (window as any).PIXI = PIXI;
+if (typeof window !== 'undefined') (window as any).PIXI = PIXI;
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
-let Live2DModel: any;
 
 const preloadModel = async () => {
   if (!Live2DModel) {
-    const module = await import("pixi-live2d-display/cubism4");
-    Live2DModel = module.Live2DModel;
+    await import('pixi-live2d-display/cubism4');
   }
-  return await Live2DModel.from("/model/vanilla/vanilla.model3.json");
+  return await Live2DModel.from('/model/vanilla/vanilla.model3.json');
 };
 
 const Model: React.FC = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
   const modelRef = useRef<any>(null);
-  const appRef = useRef<PIXI.Application | null>(null);
+  const appRef = useRef<Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
 
   const updateModelSize = useCallback(() => {
@@ -75,7 +75,7 @@ const Model: React.FC = memo(() => {
 
   useEffect(() => {
     (async () => {
-      const app = new PIXI.Application({
+      const app = new Application({
         view: canvasRef.current!,
         backgroundAlpha: 0,
         resizeTo: window,
