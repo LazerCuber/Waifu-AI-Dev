@@ -34,7 +34,7 @@
     OPENAI_API_KEY="your_chatgpt_api_key"
     MISTRAL_API_KEY="your_mistral_api_key"
     GROQ_API_KEY="your_groq_api_key"
-    ELEVENLABS_API_KEY="your_elevenlabs_api_key"
+    ELEVENLABS_API_KEY="your_eleven-labs_api_key"
     VOICE_ID="your_voice_id"
     ```
 4. Run the development server
