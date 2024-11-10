@@ -33,19 +33,7 @@ const Model: React.FC = memo(() => {
     }
   }, []);
 
-  const onMouseMove = useCallback((event: MouseEvent) => {
-    const rect = appRef.current?.view.getBoundingClientRect();
-    if (rect) {
-      const { clientX, clientY } = event;
-      mouseMoveRef.current.target = {
-        x: ((clientX - rect.left) / rect.width - 0.5) * 2 * SENSITIVITY,
-        y: -(((clientY - rect.top) / rect.height - 0.5) * 2 * SENSITIVITY),
-      };
-      mouseMoveRef.current.last = Date.now();
-    }
-  }, []);
-
-  const updateHeadPosition = useCallback(() => {
+  const animateModel = useCallback(() => {
     const model = modelRef.current;
     if (model) {
       const now = Date.now();
@@ -54,24 +42,16 @@ const Model: React.FC = memo(() => {
       mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS;
       mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
-    }
-  }, []);
 
-  const updateBodyPosition = useCallback(() => {
-    const model = modelRef.current;
-    if (model) {
-      const now = Date.now();
       const breathingFactor = Math.sin(now * 0.001) * 0.02;
       model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
     }
   }, []);
 
   const renderLoop = useCallback(() => {
-    updateHeadPosition();
-    updateBodyPosition();
+    animateModel();
     appRef.current?.render();
-    requestAnimationFrame(renderLoop);
-  }, [updateHeadPosition, updateBodyPosition]);
+  }, [animateModel]);
 
   useEffect(() => {
     (async () => {
@@ -90,11 +70,19 @@ const Model: React.FC = memo(() => {
       updateModelSize();
 
       const handleMouseMove = (event: MouseEvent) => {
-        onMouseMove(event);
+        const rect = appRef.current?.view.getBoundingClientRect();
+        if (rect) {
+          const { clientX, clientY } = event;
+          mouseMoveRef.current.target = {
+            x: ((clientX - rect.left) / rect.width - 0.5) * 2 * SENSITIVITY,
+            y: -(((clientY - rect.top) / rect.height - 0.5) * 2 * SENSITIVITY),
+          };
+          mouseMoveRef.current.last = Date.now();
+        }
       };
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-      renderLoop();
+      app.ticker.add(renderLoop);
 
       const handleResize = () => {
         app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -108,7 +96,7 @@ const Model: React.FC = memo(() => {
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
-  }, [onMouseMove, updateModelSize, renderLoop]);
+  }, [renderLoop, updateModelSize]);
 
   useEffect(() => {
     if (lastMessage?.role === 'assistant' && modelRef.current) {
