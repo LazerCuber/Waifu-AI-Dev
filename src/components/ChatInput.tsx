@@ -19,10 +19,26 @@ export default function ChatInput() {
   const audioQueueRef = useRef<AudioBuffer[]>([]);
   const isPlayingRef = useRef<boolean>(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isAudioContextReady, setIsAudioContextReady] = useState(false);
 
   useEffect(() => {
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const handleUserGesture = async () => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume().catch(console.error);
+      }
+      setIsAudioContextReady(true);
+    };
+
+    // Attach the user gesture handler to common user interaction events
+    document.addEventListener('click', handleUserGesture);
+    document.addEventListener('touchstart', handleUserGesture);
+
     return () => {
+      document.removeEventListener('click', handleUserGesture);
+      document.removeEventListener('touchstart', handleUserGesture);
       audioContextRef.current?.close().catch(console.error);
     };
   }, []);
@@ -47,7 +63,9 @@ export default function ChatInput() {
     return new Promise((resolve) => {
       if (!audioContextRef.current) return resolve();
 
-      if (audioContextRef.current.state === 'suspended') audioContextRef.current.resume();
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(console.error);
+      }
 
       sourceNodeRef.current?.stop();
       sourceNodeRef.current?.disconnect();
@@ -95,7 +113,7 @@ export default function ChatInput() {
         const audioBuffer = await synthesizeSentence(sentence);
         if (audioBuffer) {
           audioQueueRef.current.push(audioBuffer);
-          if (!isPlayingRef.current) {
+          if (!isPlayingRef.current && isAudioContextReady) {
             isPlayingRef.current = true;
             playNextSentence();
           }
@@ -106,7 +124,7 @@ export default function ChatInput() {
       alert("An error occurred while sending your message.");
       setIsLoading(false);
     }
-  }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence]);
+  }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady]);
 
   return (
     <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
