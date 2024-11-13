@@ -6,10 +6,12 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { IoSend } from "react-icons/io5";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
 
-export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+const API_SYNTHESIZE = "/api/synthasize";
+const API_CHAT = "/api/chat";
 
-export default function ChatInput() {
+export const dynamic = "force-dynamic";
+
+const ChatInput: React.FC = () => {
   const [messages, setMessages] = useAtom(messageHistoryAtom);
   const [lastMessage, setLastMessage] = useAtom(lastMessageAtom);
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
@@ -23,10 +25,15 @@ export default function ChatInput() {
 
   useEffect(() => {
     const handleUserGesture = async () => {
-      if (!audioContextRef.current) audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (audioContextRef.current.state === 'suspended') await audioContextRef.current.resume().catch(console.error);
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume().catch(console.error);
+      }
       setIsAudioContextReady(true);
     };
+
     document.addEventListener('click', handleUserGesture);
     document.addEventListener('touchstart', handleUserGesture);
     return () => {
@@ -38,7 +45,11 @@ export default function ChatInput() {
 
   const synthesizeSentence = useCallback(async (sentence: string): Promise<AudioBuffer | null> => {
     try {
-      const response = await fetch("/api/synthasize", { method: "POST", body: JSON.stringify({ message: { content: sentence, role: "assistant" } }), headers: { "Content-Type": "application/json" } });
+      const response = await fetch(API_SYNTHESIZE, {
+        method: "POST",
+        body: JSON.stringify({ message: { content: sentence, role: "assistant" } }),
+        headers: { "Content-Type": "application/json" },
+      });
       if (!response.ok) throw new Error(`Failed to synthesize: ${response.statusText}`);
       return await audioContextRef.current!.decodeAudioData(await response.arrayBuffer());
     } catch (error) {
@@ -49,7 +60,9 @@ export default function ChatInput() {
 
   const playSentence = useCallback((audioBuffer: AudioBuffer): Promise<void> => new Promise((resolve) => {
     if (!audioContextRef.current) return resolve();
-    if (audioContextRef.current.state === 'suspended') audioContextRef.current.resume().catch(console.error);
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume().catch(console.error);
+    }
     sourceNodeRef.current?.stop();
     sourceNodeRef.current?.disconnect();
     sourceNodeRef.current = audioContextRef.current.createBufferSource();
@@ -59,11 +72,16 @@ export default function ChatInput() {
     sourceNodeRef.current.start();
   }), []);
 
-  const playNextSentence = useCallback(async (): Promise<void> => {
-    if (audioQueueRef.current.length === 0) { isPlayingRef.current = false; return; }
+  const playAudioQueue = useCallback(async (): Promise<void> => {
+    if (audioQueueRef.current.length === 0) {
+      isPlayingRef.current = false;
+      return;
+    }
     const audio = audioQueueRef.current.shift();
-    if (audio) await playSentence(audio);
-    playNextSentence();
+    if (audio) {
+      await playSentence(audio);
+      playAudioQueue();
+    }
   }, [playSentence]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
@@ -72,13 +90,20 @@ export default function ChatInput() {
     const newMessages: CoreMessage[] = [...messages, { content: input, role: "user" }];
     setMessages(newMessages);
     setInput("");
+
     try {
-      const response = await fetch("/api/chat", { method: "POST", body: JSON.stringify({ messages: newMessages }), headers: { "Content-Type": "application/json" } });
+      const response = await fetch(API_CHAT, {
+        method: "POST",
+        body: JSON.stringify({ messages: newMessages }),
+        headers: { "Content-Type": "application/json" },
+      });
       const textResult = (await response.json()) as CoreMessage;
       setLastMessage(textResult);
       setMessages([...newMessages, textResult]);
       setIsLoading(false);
+
       if (typeof textResult.content !== 'string') return;
+
       const sentences = textResult.content.split(/(?<=\.|\?|!)/).map(s => s.trim()).filter(Boolean);
       for (const sentence of sentences) {
         const audioBuffer = await synthesizeSentence(sentence);
@@ -86,7 +111,7 @@ export default function ChatInput() {
           audioQueueRef.current.push(audioBuffer);
           if (!isPlayingRef.current && isAudioContextReady) {
             isPlayingRef.current = true;
-            playNextSentence();
+            playAudioQueue();
           }
         }
       }
@@ -95,7 +120,7 @@ export default function ChatInput() {
       alert("An error occurred while sending your message.");
       setIsLoading(false);
     }
-  }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady]);
+  }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playAudioQueue, isAudioContextReady]);
 
   return (
     <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
@@ -120,3 +145,5 @@ export default function ChatInput() {
     </div>
   );
 }
+
+export default ChatInput;
