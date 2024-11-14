@@ -5,14 +5,14 @@ import dynamic from 'next/dynamic';
 import ChatInput from "~/components/ChatInput";
 import React from 'react';
 
-const ChatterBox = dynamic(() => import("~/components/ChatterBox"), { ssr: false });
-const Model = dynamic(() => import("~/components/Model"), { ssr: false });
-
 const Background = () => (
   <div className="absolute inset-0 z-0 overflow-hidden bg-cover bg-center" 
        style={{ backgroundImage: 'url(/one.avif)' }}>
   </div>
 );
+
+const ChatterBox = dynamic(() => import("~/components/ChatterBox"), { ssr: false, loading: () => null });
+const Model = dynamic(() => import("~/components/Model"), { ssr: false, loading: () => null });
 
 export default function Page() {
   const [live2dLoaded, setLive2dLoaded] = useState(false);
