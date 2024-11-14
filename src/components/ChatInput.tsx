@@ -26,19 +26,16 @@ export default function ChatInput() {
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
-      if (audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume().catch(console.error);
-      }
+      if (audioContextRef.current.state === 'suspended') await audioContextRef.current.resume();
       setIsAudioContextReady(true);
     };
 
-    document.addEventListener('click', handleUserGesture);
-    document.addEventListener('touchstart', handleUserGesture);
+    const events = ['click', 'touchstart'];
+    events.forEach(event => document.addEventListener(event, handleUserGesture));
 
     return () => {
-      document.removeEventListener('click', handleUserGesture);
-      document.removeEventListener('touchstart', handleUserGesture);
-      audioContextRef.current?.close().catch(console.error);
+      events.forEach(event => document.removeEventListener(event, handleUserGesture));
+      audioContextRef.current?.close();
     };
   }, []);
 
