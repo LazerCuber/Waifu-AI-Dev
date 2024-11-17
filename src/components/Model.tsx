@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { Application } from 'pixi.js';
-import { useAtomValue, useAtom } from 'jotai';
+import { useAtomValue} from 'jotai';
 import { lastMessageAtom } from '~/atoms/ChatAtom';
 import React, { useEffect, useRef, useCallback, memo } from 'react';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
