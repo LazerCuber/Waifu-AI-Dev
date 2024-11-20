@@ -7,9 +7,6 @@ dependencies:
   '@ai-sdk/openai':
     specifier: ^0.0.24
     version: 0.0.24(zod@3.23.8)
-  '@ai-sdk/react':
-    specifier: ^0.0.1
-    version: 0.0.1(react@18.3.1)(zod@3.23.8)
   '@t3-oss/env-nextjs':
     specifier: ^0.10.1
     version: 0.10.1(typescript@5.6.2)(zod@3.23.8)
@@ -48,18 +45,12 @@ dependencies:
     version: 3.23.8
 
 devDependencies:
-  '@types/eslint':
-    specifier: ^8.56.12
-    version: 8.56.12
   '@types/node':
-    specifier: ^20.16.5
-    version: 20.16.5
+    specifier: 22.9.1
+    version: 22.9.1
   '@types/react':
     specifier: ^18.3.8
     version: 18.3.8
-  '@types/react-dom':
-    specifier: ^18.3.0
-    version: 18.3.0
   '@typescript-eslint/eslint-plugin':
     specifier: ^7.18.0
     version: 7.18.0(@typescript-eslint/parser@7.18.0)(eslint@8.57.1)(typescript@5.6.2)
@@ -72,15 +63,6 @@ devDependencies:
   eslint-config-next:
     specifier: ^14.2.13
     version: 14.2.13(eslint@8.57.1)(typescript@5.6.2)
-  postcss:
-    specifier: ^8.4.47
-    version: 8.4.47
-  prettier:
-    specifier: ^3.3.3
-    version: 3.3.3
-  prettier-plugin-tailwindcss:
-    specifier: ^0.5.14
-    version: 0.5.14(prettier@3.3.3)
   tailwindcss:
     specifier: ^3.4.12
     version: 3.4.12
@@ -158,23 +140,6 @@ packages:
       json-schema: 0.4.0
     dev: false
 
-  /@ai-sdk/react@0.0.1(react@18.3.1)(zod@3.23.8):
-    resolution: {integrity: sha512-y6KXzxRR7vmAgDVnS/hnLPt3RztvWOisANBw47O1o1D2nDeUqTo8E/SNw2J8mzzlRInGaw40EREY8jEf9AcwWQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      react: ^18 || ^19
-    peerDependenciesMeta:
-      react:
-        optional: true
-    dependencies:
-      '@ai-sdk/provider-utils': 0.0.13(zod@3.23.8)
-      '@ai-sdk/ui-utils': 0.0.1(zod@3.23.8)
-      react: 18.3.1
-      swr: 2.2.0(react@18.3.1)
-    transitivePeerDependencies:
-      - zod
-    dev: false
-
   /@ai-sdk/react@0.0.59(react@18.3.1)(zod@3.23.8):
     resolution: {integrity: sha512-1WbgO3J2/OoheMuNMxy5itJ3NVqOpqpAQxFNp7AoXgnDv4wDF4kTif61rTlKh7dCPvBHj2HXLmob+TrVFaWhYw==}
     engines: {node: '>=18'}
@@ -222,15 +187,6 @@ packages:
       '@ai-sdk/ui-utils': 0.0.44(zod@3.23.8)
       sswr: 2.1.0(svelte@4.2.19)
       svelte: 4.2.19
-    transitivePeerDependencies:
-      - zod
-    dev: false
-
-  /@ai-sdk/ui-utils@0.0.1(zod@3.23.8):
-    resolution: {integrity: sha512-zOr1zIw/EH4fEQvDKsqYG3wY7GW32h8Wrx0lQpSAP59UCA4zgHBH6ogF5oj7+LUuWjT6be9S0G3l/tEPyRyxEw==}
-    engines: {node: '>=18'}
-    dependencies:
-      '@ai-sdk/provider-utils': 0.0.13(zod@3.23.8)
     transitivePeerDependencies:
       - zod
     dev: false
@@ -1046,26 +1002,16 @@ packages:
     resolution: {integrity: sha512-qp3m9PPz4gULB9MhjGID7wpo3gJ4bTGXm7ltNDsmOvsPduTeHp8wSW9YckBj3mljeOh4F0m2z/0JKAALRKbmLQ==}
     dev: false
 
-  /@types/eslint@8.56.12:
-    resolution: {integrity: sha512-03ruubjWyOHlmljCVoxSuNDdmfZDzsrrz0P2LeJsOXr+ZwFQ+0yQIwNCwt/GYhV7Z31fgtXJTAEs+FYlEL851g==}
-    dependencies:
-      '@types/estree': 1.0.6
-      '@types/json-schema': 7.0.15
-    dev: true
-
   /@types/estree@1.0.6:
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
-
-  /@types/json-schema@7.0.15:
-    resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-    dev: true
+    dev: false
 
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
     dev: true
 
-  /@types/node@20.16.5:
-    resolution: {integrity: sha512-VwYCweNo3ERajwy0IUlqqcyZ8/A7Zwa9ZP3MnENWcB11AejO+tLy3pu850goUW2FC/IJMdZUfKpX/yxL1gymCA==}
+  /@types/node@22.9.1:
+    resolution: {integrity: sha512-p8Yy/8sw1caA8CdRIQBG5tiLHmxtQKObCijiAa9Ez+d4+PRffM4054xbju0msf+cvhJpnFEeNjxmVT/0ipktrg==}
     dependencies:
       undici-types: 6.19.8
     dev: true
@@ -1076,12 +1022,6 @@ packages:
 
   /@types/prop-types@15.7.13:
     resolution: {integrity: sha512-hCZTSvwbzWGvhqxp/RqVqwU999pBf2vp7hzIjiYOsl8wqOmUxkQ6ddw1cV3l8811+kdUFus/q4d1Y3E3SyEifA==}
-
-  /@types/react-dom@18.3.0:
-    resolution: {integrity: sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==}
-    dependencies:
-      '@types/react': 18.3.8
-    dev: true
 
   /@types/react@18.3.8:
     resolution: {integrity: sha512-syBUrW3/XpnW4WJ41Pft+I+aPoDVbrBVQGEnbD7NijDGlVC+8gV/XKRY+7vMDlfPpbwYt0l1vd/Sj8bJGMbs9Q==}
@@ -3669,67 +3609,6 @@ packages:
     engines: {node: '>= 0.8.0'}
     dev: true
 
-  /prettier-plugin-tailwindcss@0.5.14(prettier@3.3.3):
-    resolution: {integrity: sha512-Puaz+wPUAhFp8Lo9HuciYKM2Y2XExESjeT+9NQoVFXZsPPnc9VYss2SpxdQ6vbatmt8/4+SN0oe0I1cPDABg9Q==}
-    engines: {node: '>=14.21.3'}
-    peerDependencies:
-      '@ianvs/prettier-plugin-sort-imports': '*'
-      '@prettier/plugin-pug': '*'
-      '@shopify/prettier-plugin-liquid': '*'
-      '@trivago/prettier-plugin-sort-imports': '*'
-      '@zackad/prettier-plugin-twig-melody': '*'
-      prettier: ^3.0
-      prettier-plugin-astro: '*'
-      prettier-plugin-css-order: '*'
-      prettier-plugin-import-sort: '*'
-      prettier-plugin-jsdoc: '*'
-      prettier-plugin-marko: '*'
-      prettier-plugin-organize-attributes: '*'
-      prettier-plugin-organize-imports: '*'
-      prettier-plugin-sort-imports: '*'
-      prettier-plugin-style-order: '*'
-      prettier-plugin-svelte: '*'
-    peerDependenciesMeta:
-      '@ianvs/prettier-plugin-sort-imports':
-        optional: true
-      '@prettier/plugin-pug':
-        optional: true
-      '@shopify/prettier-plugin-liquid':
-        optional: true
-      '@trivago/prettier-plugin-sort-imports':
-        optional: true
-      '@zackad/prettier-plugin-twig-melody':
-        optional: true
-      prettier-plugin-astro:
-        optional: true
-      prettier-plugin-css-order:
-        optional: true
-      prettier-plugin-import-sort:
-        optional: true
-      prettier-plugin-jsdoc:
-        optional: true
-      prettier-plugin-marko:
-        optional: true
-      prettier-plugin-organize-attributes:
-        optional: true
-      prettier-plugin-organize-imports:
-        optional: true
-      prettier-plugin-sort-imports:
-        optional: true
-      prettier-plugin-style-order:
-        optional: true
-      prettier-plugin-svelte:
-        optional: true
-    dependencies:
-      prettier: 3.3.3
-    dev: true
-
-  /prettier@3.3.3:
-    resolution: {integrity: sha512-i2tDNA0O5IrMO757lfrdQZCc2jPNDVntV0m/+4whiDfWaTKfMNgR7Qz0NAeGz/nRqF4m5/6CLzbP4/liHt12Ew==}
-    engines: {node: '>=14'}
-    hasBin: true
-    dev: true
-
   /promise-polyfill@8.3.0:
     resolution: {integrity: sha512-H5oELycFml5yto/atYqmjyigJoAo3+OXwolYiH7OfQuYlAqhxNvTfiNMbV9hsC6Yp83yE5r2KTVmtrG6R9i6Pg==}
     dev: false
@@ -4172,15 +4051,6 @@ packages:
       locate-character: 3.0.0
       magic-string: 0.30.11
       periscopic: 3.1.0
-    dev: false
-
-  /swr@2.2.0(react@18.3.1):
-    resolution: {integrity: sha512-AjqHOv2lAhkuUdIiBu9xbuettzAzWXmCEcLONNKJRba87WAefz8Ca9d6ds/SzrPc235n1IxWYdhJ2zF3MNUaoQ==}
-    peerDependencies:
-      react: ^16.11.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      react: 18.3.1
-      use-sync-external-store: 1.2.2(react@18.3.1)
     dev: false
 
   /swr@2.2.5(react@18.3.1):
