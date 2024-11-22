@@ -9,6 +9,7 @@ const config = {
   compress: true,
   experimental: {
     optimizePackageImports: ['react-icons'],
+    swcMinify: true,
   },
 };
 
