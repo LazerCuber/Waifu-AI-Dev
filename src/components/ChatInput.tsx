@@ -2,7 +2,7 @@
 
 import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useDeferredValue } from "react";
 import { IoSend } from "react-icons/io5";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
 
@@ -14,6 +14,7 @@ export default function ChatInput() {
   const [lastMessage, setLastMessage] = useAtom(lastMessageAtom);
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
   const [input, setInput] = useState("");
+  const deferredInput = useDeferredValue(input);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const audioQueueRef = useRef<AudioBuffer[]>([]);
@@ -35,7 +36,15 @@ export default function ChatInput() {
 
     return () => {
       events.forEach(event => document.removeEventListener(event, handleUserGesture));
-      audioContextRef.current?.close();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.stop();
+        sourceNodeRef.current.disconnect();
+      }
+      audioQueueRef.current = [];
+      isPlayingRef.current = false;
     };
   }, []);
 
@@ -121,6 +130,9 @@ export default function ChatInput() {
       setIsLoading(false);
     }
   }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady]);
+
+  useEffect(() => {
+  }, [deferredInput]);
 
   return (
     <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
