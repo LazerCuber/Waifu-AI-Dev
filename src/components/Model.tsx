@@ -1,14 +1,13 @@
 import * as PIXI from 'pixi.js';
-import { Application, SCALE_MODES } from 'pixi.js';
-import { useAtomValue } from 'jotai';
+import { Application } from 'pixi.js';
+import { useAtomValue} from 'jotai';
 import { lastMessageAtom } from '~/atoms/ChatAtom';
 import React, { useEffect, useRef, useCallback, memo } from 'react';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
 
 if (typeof window !== 'undefined') (window as any).PIXI = PIXI;
 
-const SENSITIVITY = 0.95, SMOOTHNESS = 0.7, RECENTER_DELAY = 800; // Adjusted smoothness
-const TARGET_FPS = 60; // Target FPS for animation
+const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 
 const preloadModel = () => Live2DModel.from('/model/vanilla/vanilla.model3.json');
 
@@ -18,7 +17,6 @@ const Model: React.FC = memo(() => {
   const modelRef = useRef<any>(null);
   const appRef = useRef<Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
-  const animationFrameRef = useRef<number | null>(null); // Store animation frame ID
 
   const updateModelSize = useCallback(() => {
     const model = modelRef.current;
@@ -48,7 +46,6 @@ const Model: React.FC = memo(() => {
   const renderLoop = useCallback(() => {
     animateModel();
     appRef.current?.render();
-    animationFrameRef.current = requestAnimationFrame(renderLoop); // Schedule next frame
   }, [animateModel]);
 
   useEffect(() => {
@@ -59,12 +56,8 @@ const Model: React.FC = memo(() => {
         resizeTo: window,
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
-        antialias: true, // Enable antialiasing
       });
-      app.renderer.plugins.interaction.autoPreventDefault = false; // Fixes some interation issues
       appRef.current = app;
-
-      PIXI.settings.SCALE_MODE = SCALE_MODES.LINEAR; // Better scaling mode
 
       modelRef.current = await preloadModel();
       app.stage.addChild(modelRef.current);
@@ -84,7 +77,8 @@ const Model: React.FC = memo(() => {
       };
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-      animationFrameRef.current = requestAnimationFrame(renderLoop); // Start animation loop
+      app.ticker.add(renderLoop);
+
       const handleResize = () => {
         app.renderer.resize(window.innerWidth, window.innerHeight);
         updateModelSize();
@@ -94,7 +88,6 @@ const Model: React.FC = memo(() => {
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
-        if(animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current); // Stop animation loop
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
