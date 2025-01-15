@@ -3,7 +3,7 @@
 	"FileReferences": {
 		"Moc": "vanilla.moc3",
 		"Textures": [
-			"vanilla.4096/texture_00.png"
+			"vanilla.4096/texture_00.webp"
 		],
 		"Physics": "vanilla.physics3.json",
 		"DisplayInfo": "vanilla.cdi3.json"
