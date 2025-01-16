@@ -1,13 +1,15 @@
 import * as PIXI from 'pixi.js';
 import { Application } from 'pixi.js';
-import { useAtomValue} from 'jotai';
+import { useAtomValue } from 'jotai';
 import { lastMessageAtom } from '~/atoms/ChatAtom';
 import React, { useEffect, useRef, useCallback, memo } from 'react';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
 
 if (typeof window !== 'undefined') (window as any).PIXI = PIXI;
 
-const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
+const SENSITIVITY = 0.95;
+const SMOOTHNESS = 1;
+const RECENTER_DELAY = 1000;
 
 const preloadModel = () => Live2DModel.from('/model/vanilla/vanilla.model3.json');
 
@@ -17,6 +19,7 @@ const Model: React.FC = memo(() => {
   const modelRef = useRef<any>(null);
   const appRef = useRef<Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
+  const lastTimeRef = useRef<number>(performance.now());
 
   const updateModelSize = useCallback(() => {
     const model = modelRef.current;
@@ -28,14 +31,14 @@ const Model: React.FC = memo(() => {
     }
   }, []);
 
-  const animateModel = useCallback(() => {
+  const animateModel = useCallback((deltaTime: number) => {
     const model = modelRef.current;
     if (model) {
       const now = Date.now();
       const factor = Math.max(0, Math.min((now - mouseMoveRef.current.last - RECENTER_DELAY) / 1000, 1));
       const easeFactor = Math.sin(Math.PI * factor / 2);
-      mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS;
-      mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS;
+      mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS * deltaTime;
+      mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS * deltaTime;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
 
       const breathingFactor = Math.sin(now * 0.001) * 0.02;
@@ -43,8 +46,8 @@ const Model: React.FC = memo(() => {
     }
   }, []);
 
-  const renderLoop = useCallback(() => {
-    animateModel();
+  const renderLoop = useCallback((deltaTime: number) => {
+    animateModel(deltaTime);
     appRef.current?.render();
   }, [animateModel]);
 
@@ -59,37 +62,41 @@ const Model: React.FC = memo(() => {
       });
       appRef.current = app;
 
-      modelRef.current = await preloadModel();
-      app.stage.addChild(modelRef.current);
-      modelRef.current.anchor.set(0.5, 0.78);
-      updateModelSize();
-
-      const handleMouseMove = (event: MouseEvent) => {
-        const rect = appRef.current?.view.getBoundingClientRect();
-        if (rect) {
-          const { clientX, clientY } = event;
-          mouseMoveRef.current.target = {
-            x: ((clientX - rect.left) / rect.width - 0.5) * 2 * SENSITIVITY,
-            y: -(((clientY - rect.top) / rect.height - 0.5) * 2 * SENSITIVITY),
-          };
-          mouseMoveRef.current.last = Date.now();
-        }
-      };
-      window.addEventListener('mousemove', handleMouseMove, { passive: true });
-
-      app.ticker.add(renderLoop);
-      
-      const handleResize = () => {
-        app.renderer.resize(window.innerWidth, window.innerHeight);
+      try {
+        modelRef.current = await preloadModel();
+        app.stage.addChild(modelRef.current);
+        modelRef.current.anchor.set(0.5, 0.78);
         updateModelSize();
-      };
-      window.addEventListener('resize', handleResize);
 
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        app.ticker.remove(renderLoop);
-        app.destroy(true, { children: true, texture: true, baseTexture: true });
-      };
+        const handleMouseMove = (event: MouseEvent) => {
+          const rect = appRef.current?.view.getBoundingClientRect();
+          if (rect) {
+            const { clientX, clientY } = event;
+            mouseMoveRef.current.target = {
+              x: ((clientX - rect.left) / rect.width - 0.5) * 2 * SENSITIVITY,
+              y: -(((clientY - rect.top) / rect.height - 0.5) * 2 * SENSITIVITY),
+            };
+            mouseMoveRef.current.last = Date.now();
+          }
+        };
+        window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+        app.ticker.add(renderLoop);
+
+        const handleResize = () => {
+          app.renderer.resize(window.innerWidth, window.innerHeight);
+          updateModelSize();
+        };
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          app.ticker.remove(renderLoop);
+          app.destroy(true, { children: true, texture: true, baseTexture: true });
+        };
+      } catch (error) {
+        console.error('Error setting up Pixi.js application:', error);
+      }
     })();
   }, [renderLoop, updateModelSize]);
 
@@ -98,10 +105,10 @@ const Model: React.FC = memo(() => {
       const duration = lastMessage.content.length * 55;
       const startTime = performance.now();
       const animate = (time: number) => {
-        const elapsed = time - startTime;
+        const elapsedMS = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
-          elapsed < duration ? Math.sin(elapsed / 100) * 0.5 + 0.5 : 0);
-        if (elapsed < duration) requestAnimationFrame(animate);
+          elapsedMS < duration ? Math.sin(elapsedMS / 100) * 0.5 + 0.5 : 0);
+        if (elapsedMS < duration) requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
     }
