@@ -78,7 +78,7 @@ const Model: React.FC = memo(() => {
       window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
       app.ticker.add(renderLoop);
-
+      
       const handleResize = () => {
         app.renderer.resize(window.innerWidth, window.innerHeight);
         updateModelSize();
@@ -86,8 +86,8 @@ const Model: React.FC = memo(() => {
       window.addEventListener('resize', handleResize);
 
       return () => {
-        window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
+        app.ticker.remove(renderLoop);
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
