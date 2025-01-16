@@ -4,10 +4,16 @@ import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
 import { useEffect, useRef, useState, useCallback, useDeferredValue } from "react";
 import { IoSend } from "react-icons/io5";
+import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+interface IWindow extends Window {
+  SpeechRecognition: any;
+  webkitSpeechRecognition: any;
+}
 
 export default function ChatInput() {
   const [messages, setMessages] = useAtom(messageHistoryAtom);
@@ -21,6 +27,59 @@ export default function ChatInput() {
   const isPlayingRef = useRef<boolean>(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isAudioContextReady, setIsAudioContextReady] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const windowWithSpeech = window as unknown as IWindow;
+      const SpeechRecognition = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
+      
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = Array.from(event.results)
+            .map((result: any) => result[0])
+            .map((result: any) => result.transcript)
+            .join('');
+          setInput(transcript);
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  const toggleListening = useCallback(() => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in your browser.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  }, [isListening]);
 
   useEffect(() => {
     const handleUserGesture = async () => {
@@ -95,6 +154,8 @@ export default function ChatInput() {
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!input.trim()) return;
+    
     setIsLoading(true);
     const newMessages: CoreMessage[] = [...messages, { content: input, role: "user" }];
     setMessages(newMessages);
@@ -138,8 +199,23 @@ export default function ChatInput() {
     <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       <form onSubmit={handleSubmit}>
         <div className={`flex w-full items-center overflow-hidden rounded-[12px] bg-white shadow transition-all duration-300 ${isHovered || input ? 'border-[rgb(196,191,228)] shadow-lg scale-105' : 'border-transparent'} border-2`}>
+          <div className="flex h-full items-center justify-center px-4">
+            <button 
+              type="button" 
+              onClick={toggleListening}
+              disabled={isLoading}
+              aria-label={isListening ? "Stop listening" : "Start listening"}
+              className={`p-1 rounded-full ${isListening ? 'bg-red-100' : 'hover:bg-gray-100'}`}
+            >
+              {isListening ? (
+                <FaMicrophoneSlash className="text-red-500" />
+              ) : (
+                <FaMicrophone className="text-gray-500 hover:text-gray-700" />
+              )}
+            </button>
+          </div>
           <input
-            className="h-full flex-1 px-5 py-2 pr-0 text-neutral-800 outline-none"
+            className="h-full flex-1 px-2 py-2 text-neutral-800 outline-none"
             type="text"
             placeholder="Enter your message..."
             onChange={(e) => setInput(e.target.value)}
