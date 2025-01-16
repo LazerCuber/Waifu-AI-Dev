@@ -34,10 +34,8 @@ const Model: React.FC = memo(() => {
       const now = Date.now();
       const factor = Math.max(0, Math.min((now - mouseMoveRef.current.last - RECENTER_DELAY) / 1000, 1));
       const easeFactor = Math.sin(Math.PI * factor / 2);
-      const targetX = mouseMoveRef.current.target.x * (1 - easeFactor);
-      const targetY = mouseMoveRef.current.target.y * (1 - easeFactor);
-      mouseMoveRef.current.current.x += (targetX - mouseMoveRef.current.current.x) * SMOOTHNESS;
-      mouseMoveRef.current.current.y += (targetY - mouseMoveRef.current.current.y) * SMOOTHNESS;
+      mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS;
+      mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
 
       const breathingFactor = Math.sin(now * 0.001) * 0.02;
@@ -81,9 +79,15 @@ const Model: React.FC = memo(() => {
 
       app.ticker.add(renderLoop);
 
+      const handleResize = () => {
+        app.renderer.resize(window.innerWidth, window.innerHeight);
+        updateModelSize();
+      };
+      window.addEventListener('resize', handleResize);
+
       return () => {
+        window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
-        app.ticker.remove(renderLoop);
         app.destroy(true, { children: true, texture: true, baseTexture: true });
       };
     })();
