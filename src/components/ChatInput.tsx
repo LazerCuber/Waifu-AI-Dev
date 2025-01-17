@@ -29,12 +29,13 @@ export default function ChatInput() {
   const [isAudioContextReady, setIsAudioContextReady] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const windowWithSpeech = window as unknown as IWindow;
       const SpeechRecognition = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
-      
+
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
@@ -78,6 +79,7 @@ export default function ChatInput() {
     } else {
       recognitionRef.current.start();
       setIsListening(true);
+      inputRef.current?.focus(); // Automatically focus on input field
     }
   }, [isListening]);
 
@@ -155,7 +157,7 @@ export default function ChatInput() {
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
+
     setIsLoading(true);
     const newMessages: CoreMessage[] = [...messages, { content: input, role: "user" }];
     setMessages(newMessages);
@@ -192,8 +194,11 @@ export default function ChatInput() {
     }
   }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady]);
 
-  useEffect(() => {
-  }, [deferredInput]);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isLoading) {
+      handleSubmit(new Event('submit') as any);
+    }
+  };
 
   return (
     <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
@@ -215,11 +220,13 @@ export default function ChatInput() {
             </button>
           </div>
           <input
+            ref={inputRef}
             className="h-full flex-1 px-2 py-2 text-neutral-800 outline-none"
             type="text"
             placeholder="Enter your message..."
             onChange={(e) => setInput(e.target.value)}
             value={input}
+            onKeyDown={handleKeyDown}
             disabled={isLoading}
             aria-label="Chat input"
           />
