@@ -47,6 +47,7 @@ export default function ChatInput() {
             .map((result: any) => result.transcript)
             .join('');
           setInput(transcript);
+          inputRef.current?.focus();
         };
 
         recognitionRef.current.onerror = (event: any) => {
@@ -79,7 +80,7 @@ export default function ChatInput() {
     } else {
       recognitionRef.current.start();
       setIsListening(true);
-      inputRef.current?.focus(); // Automatically focus on input field
+      inputRef.current?.focus();
     }
   }, [isListening]);
 
@@ -205,8 +206,8 @@ export default function ChatInput() {
       <form onSubmit={handleSubmit}>
         <div className={`flex w-full items-center overflow-hidden rounded-[12px] bg-white shadow transition-all duration-300 ${isHovered || input ? 'border-[rgb(196,191,228)] shadow-lg scale-105' : 'border-transparent'} border-2`}>
           <div className="flex h-full items-center justify-center px-4">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={toggleListening}
               disabled={isLoading}
               aria-label={isListening ? "Stop listening" : "Start listening"}
