@@ -19,7 +19,6 @@ const Model: React.FC = memo(() => {
   const modelRef = useRef<any>(null);
   const appRef = useRef<Application | null>(null);
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
-  const lastTimeRef = useRef<number>(performance.now());
 
   const updateModelSize = useCallback(() => {
     const model = modelRef.current;
