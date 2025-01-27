@@ -44,22 +44,20 @@ const Model: React.FC = memo(() => {
       const breathingFactor = Math.sin(now * 0.001) * 0.2;
       model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
 
-      // Idle facial expressions
-      const eyeBlink = Math.sin(now * 0.0005) * 0.5 + 0.5; // Oscillates between 0 and 1
-      model.internalModel.coreModel.setParameterValueById('ParamEyeLOpen', eyeBlink);
-      model.internalModel.coreModel.setParameterValueById('ParamEyeROpen', eyeBlink);
+      // Eye animation
+      const eyeOpennessRange = { min: 0.0, max: 1.0 }; // Define the range for eye openness
+      const eyeOpenness = Math.sin(now * 0.0005) * (eyeOpennessRange.max - eyeOpennessRange.min) + eyeOpennessRange.min; // Oscillates between min and max
+      model.internalModel.coreModel.setParameterValueById('ParamEyeLSmile', eyeOpenness);
+      model.internalModel.coreModel.setParameterValueById('ParamEyeRSmile', eyeOpenness);
 
+      // Mouth smile animation
       const mouthSmile = Math.sin(now * 0.001) * 0.5 + 0.5;
       model.internalModel.coreModel.setParameterValueById('ParamMouthForm', mouthSmile);
 
-      // New expressions: Big/Small eyes
-      const eyeSize = Math.sin(now * 0.0005) * 0.7 + 0.7; // Oscillates between 0 and 1
-      model.internalModel.coreModel.setParameterValueById('ParamEyeRSmile', eyeSize);
-      model.internalModel.coreModel.setParameterValueById('ParamEyeLSmile', eyeSize);
-
-      // New movement: Tilted head
-      const headTilt = Math.sin(now * 0.0001) * 5.5; // Oscillates between -15 and 15 degrees
+      // Head tilt animation
+      const headTilt = Math.sin(now * 0.0005) * 5; // Oscillates between -10 and 10 degrees
       model.internalModel.coreModel.setParameterValueById('ParamAngleZ', headTilt);
+      model.internalModel.coreModel.setParameterValueById('ParamBodyAngleZ', headTilt * 0.3); // Reduced body tilt
     }
   }, []);
 
