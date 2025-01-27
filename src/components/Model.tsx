@@ -44,7 +44,6 @@ const Model: React.FC = memo(() => {
 
   const renderLoop = useCallback((deltaTime: number) => {
     animateModel(deltaTime);
-    appRef.current?.render();
   }, [animateModel]);
 
   useEffect(() => {
