@@ -40,8 +40,26 @@ const Model: React.FC = memo(() => {
       mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS * deltaTime;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
 
-      const breathingFactor = Math.sin(now * 0.001) * 0.02;
+      // Breathing animation
+      const breathingFactor = Math.sin(now * 0.001) * 0.2;
       model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
+
+      // Idle facial expressions
+      const eyeBlink = Math.sin(now * 0.0005) * 0.5 + 0.5; // Oscillates between 0 and 1
+      model.internalModel.coreModel.setParameterValueById('ParamEyeLOpen', eyeBlink);
+      model.internalModel.coreModel.setParameterValueById('ParamEyeROpen', eyeBlink);
+
+      const mouthSmile = Math.sin(now * 0.001) * 0.5 + 0.5;
+      model.internalModel.coreModel.setParameterValueById('ParamMouthForm', mouthSmile);
+
+      // New expressions: Big/Small eyes
+      const eyeSize = Math.sin(now * 0.0005) * 0.7 + 0.7; // Oscillates between 0 and 1
+      model.internalModel.coreModel.setParameterValueById('ParamEyeRSmile', eyeSize);
+      model.internalModel.coreModel.setParameterValueById('ParamEyeLSmile', eyeSize);
+
+      // New movement: Tilted head
+      const headTilt = Math.sin(now * 0.0001) * 5.5; // Oscillates between -15 and 15 degrees
+      model.internalModel.coreModel.setParameterValueById('ParamAngleZ', headTilt);
     }
   }, []);
 
