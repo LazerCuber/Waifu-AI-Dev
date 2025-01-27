@@ -39,25 +39,6 @@ const Model: React.FC = memo(() => {
       mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS * deltaTime;
       mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS * deltaTime;
       model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
-
-      // Breathing animation
-      const breathingFactor = Math.sin(now * 0.001) * 0.2;
-      model.internalModel.coreModel.setParameterValueById('ParamBreath', breathingFactor);
-
-      // Eye animation
-      const eyeOpennessRange = { min: 0.0, max: 1.0 }; // Define the range for eye openness
-      const eyeOpenness = Math.sin(now * 0.0005) * (eyeOpennessRange.max - eyeOpennessRange.min) + eyeOpennessRange.min; // Oscillates between min and max
-      model.internalModel.coreModel.setParameterValueById('ParamEyeLSmile', eyeOpenness);
-      model.internalModel.coreModel.setParameterValueById('ParamEyeRSmile', eyeOpenness);
-
-      // Mouth smile animation
-      const mouthSmile = Math.sin(now * 0.001) * 0.5 + 0.5;
-      model.internalModel.coreModel.setParameterValueById('ParamMouthForm', mouthSmile);
-
-      // Head tilt animation
-      const headTilt = Math.sin(now * 0.0005) * 5; // Oscillates between -10 and 10 degrees
-      model.internalModel.coreModel.setParameterValueById('ParamAngleZ', headTilt);
-      model.internalModel.coreModel.setParameterValueById('ParamBodyAngleZ', headTilt * 0.3); // Reduced body tilt
     }
   }, []);
 
