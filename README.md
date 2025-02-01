@@ -83,33 +83,6 @@ Have a nice chat!
 
 ```
 Waifu-AI
-├─ .eslintrc.cjs
-│  ├─ index
-│  ├─ info
-│  │  └─ exclude
-│  ├─ logs
-│  │  ├─ HEAD
-│  │  └─ refs
-│  │     ├─ heads
-│  │     │  ├─ main
-│  │     │  └─ stuff
-│  │     └─ remotes
-│  │        └─ origin
-│  │           ├─ main
-│  │           └─ stuff
-│  ├─ objects
-│  │  ├─ info
-│  │  └─ pack
-│  ├─ ORIG_HEAD
-│  └─ refs
-│     ├─ heads
-│     │  ├─ main
-│     │  └─ stuff
-│     ├─ remotes
-│     │  └─ origin
-│     │     ├─ main
-│     │     └─ stuff
-│     └─ tags
 ├─ .gitignore
 ├─ next.config.js
 ├─ package.json
