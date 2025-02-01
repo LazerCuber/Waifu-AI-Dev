@@ -4,6 +4,7 @@ import { useAtomValue } from 'jotai';
 import { lastMessageAtom } from '~/atoms/ChatAtom';
 import React, { useEffect, useRef, useCallback, memo } from 'react';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
+import { type CoreMessage } from "ai";
 
 if (typeof window !== 'undefined') (window as any).PIXI = PIXI;
 
@@ -84,6 +85,8 @@ const Model: React.FC = memo(() => {
         };
         window.addEventListener('resize', handleResize);
 
+        console.log('Available expressions:', modelRef.current.internalModel.motionManager.definitions.expressions);
+
         return () => {
           window.removeEventListener('mousemove', handleMouseMove);
           app.ticker.remove(renderLoop);
@@ -99,6 +102,29 @@ const Model: React.FC = memo(() => {
     if (lastMessage?.role === 'assistant' && modelRef.current) {
       const duration = lastMessage.content.length * 55;
       const startTime = performance.now();
+      
+      const emotion = (lastMessage as CoreMessage & { emotion?: string }).emotion || 'Neutral';
+      console.log('Trying to apply emotion:', emotion);
+      
+      console.log('Model structure:', modelRef.current);
+      console.log('Internal model:', modelRef.current.internalModel);
+      
+      try {
+        if (modelRef.current.expression) {
+          modelRef.current.expression(emotion);
+        } else if (modelRef.current.internalModel.expressions) {
+          const expressionIndex = modelRef.current.internalModel.expressions.indexOf(emotion);
+          if (expressionIndex >= 0) {
+            modelRef.current.internalModel.expressions.setExpression(expressionIndex);
+          }
+        } else if (modelRef.current.internalModel.motionManager.expressionManager) {
+          const manager = modelRef.current.internalModel.motionManager.expressionManager;
+          manager.startMotion(emotion);
+        }
+      } catch (error) {
+        console.error('Error applying expression:', error);
+      }
+
       const animate = (time: number) => {
         const elapsedMS = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
@@ -108,6 +134,18 @@ const Model: React.FC = memo(() => {
       requestAnimationFrame(animate);
     }
   }, [lastMessage]);
+
+  useEffect(() => {
+    if (!modelRef.current) return;
+    
+    console.log('Model loaded, checking expression methods:');
+    console.log('Direct expression method:', modelRef.current.expression);
+    console.log('Internal expressions:', modelRef.current.internalModel.expressions);
+    console.log('Expression manager:', modelRef.current.internalModel.motionManager.expressionManager);
+    
+    console.log('Available model methods:', Object.keys(modelRef.current));
+    console.log('Available internal model methods:', Object.keys(modelRef.current.internalModel));
+  }, []);
 
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
 });

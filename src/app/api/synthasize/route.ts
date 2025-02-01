@@ -5,7 +5,7 @@ import { env } from "~/env";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { message } = (await req.json()) as { message: CoreMessage };
+  const { message } = (await req.json()) as { message: CoreMessage & { emotion?: string } };
 
   const elevenlabs = new ElevenLabsClient({
     apiKey: env.ELEVENLABS_API_KEY,

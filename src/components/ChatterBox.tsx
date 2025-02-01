@@ -18,6 +18,11 @@ export default function ChatterBox() {
     return null;
   }
 
+  // Clean the message content by removing any emotion tags
+  const cleanMessage = message?.content 
+    ? (message.content as string).replace(/^\[(happy|sad|surprised|angry|neutral)\]/, '').trim()
+    : '';
+
   return (
     <div className="absolute top-7 flex flex-col-reverse items-center">
       {isLoading ? (
@@ -28,7 +33,7 @@ export default function ChatterBox() {
           className="flex max-w-3xl justify-center border-[3px] rounded-[14px] bg-white p-4 shadow animate-message-appear"
         >
           <span className="overflow-hidden text-center font-medium">
-            {message?.content as string}
+            {cleanMessage}
           </span>
         </div>
       )}

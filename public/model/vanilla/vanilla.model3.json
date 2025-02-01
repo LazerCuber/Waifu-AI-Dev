@@ -6,7 +6,15 @@
 			"vanilla.4096/texture_00.png"
 		],
 		"Physics": "vanilla.physics3.json",
-		"DisplayInfo": "vanilla.cdi3.json"
+		"DisplayInfo": "vanilla.cdi3.json",
+		"Expressions": [
+			{"Name": "Happy", "File": "Happy.exp3.json"},
+			{"Name": "Sad", "File": "Sad.exp3.json"},
+			{"Name": "Scared", "File": "Scared.exp3.json"},
+			{"Name": "Angry", "File": "Angry.exp3.json"},
+			{"Name": "Joy", "File": "Joy.exp3.json"},
+			{"Name": "Neutral", "File": "Neutral.exp3.json"}
+		]
 	},
 	"Groups": [
 		{
