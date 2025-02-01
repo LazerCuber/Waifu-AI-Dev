@@ -18,7 +18,7 @@
   npm install -g pnpm
   ```
 * ChatGPT or Groq API key (optional) (Unavailable Soon For Groq)
-* Mistral API key (optional, must choose either one of them) 
+* SambaNova API key (optional, must choose either one of them) 
 * ElevenLabs API key
 
 ### Installation
@@ -40,7 +40,7 @@
 3. Copy the `.env.example` and rename to `.env` in the root directory and update the following values
     ```env
     OPENAI_API_KEY="your_chatgpt_api_key"
-    MISTRAL_API_KEY="your_mistral_api_key"
+    SAMBANOVA_API_KEY="your_sambanova_api_key"
     GROQ_API_KEY="your_groq_api_key"
     ELEVENLABS_API_KEY="your_eleven-labs_api_key"
     VOICE_ID="your_voice_id"
