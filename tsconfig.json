@@ -30,13 +30,13 @@
     }
   },
   "include": [
-    ".eslintrc.cjs",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    ".next/types/**/*.ts"
-, "public/live2dcubismcore.min.js"  ],
+    ".next/types/**/*.ts",
+    "public/live2dcubismcore.min.js"
+  ],
   "exclude": ["node_modules"]
 }
