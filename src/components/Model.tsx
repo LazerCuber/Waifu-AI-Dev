@@ -104,10 +104,7 @@ const Model: React.FC = memo(() => {
       const startTime = performance.now();
       
       const emotion = (lastMessage as CoreMessage & { emotion?: string }).emotion || 'Neutral';
-      console.log('Trying to apply emotion:', emotion);
-      
-      console.log('Model structure:', modelRef.current);
-      console.log('Internal model:', modelRef.current.internalModel);
+      console.log('Applying emotion:', emotion);
       
       try {
         if (modelRef.current.expression) {
@@ -134,18 +131,6 @@ const Model: React.FC = memo(() => {
       requestAnimationFrame(animate);
     }
   }, [lastMessage]);
-
-  useEffect(() => {
-    if (!modelRef.current) return;
-    
-    console.log('Model loaded, checking expression methods:');
-    console.log('Direct expression method:', modelRef.current.expression);
-    console.log('Internal expressions:', modelRef.current.internalModel.expressions);
-    console.log('Expression manager:', modelRef.current.internalModel.motionManager.expressionManager);
-    
-    console.log('Available model methods:', Object.keys(modelRef.current));
-    console.log('Available internal model methods:', Object.keys(modelRef.current.internalModel));
-  }, []);
 
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
 });
