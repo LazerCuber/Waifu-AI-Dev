@@ -8,9 +8,7 @@ import { type CoreMessage } from "ai";
 
 if (typeof window !== 'undefined') (window as any).PIXI = PIXI;
 
-const SENSITIVITY = 0.95;
-const SMOOTHNESS = 1;
-const RECENTER_DELAY = 1000;
+const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 
 const preloadModel = () => Live2DModel.from('/model/vanilla/vanilla.model3.json');
 
