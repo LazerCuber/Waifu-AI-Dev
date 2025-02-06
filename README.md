@@ -13,9 +13,9 @@
 
 ### Requirements
 * node
-* pnpm >= 9.2.0
+* bun >= 1.2.2
   ```sh
-  npm install -g pnpm
+  npm install -g bun
   ```
 * ChatGPT or Groq API key (optional) (Unavailable Soon For Groq)
 * SambaNova API key (optional, must choose either one of them) 
@@ -32,9 +32,9 @@
     gh repo clone LazerCuber/Waifu-AI
     ```
 
-2. Install NPM packages
+2. Install Bun packages
     ```sh
-    pnpm install
+    bun install
     ```
 
 3. Copy the `.env.example` and rename to `.env` in the root directory and update the following values
@@ -59,7 +59,7 @@
 
 5. Run the development server
     ```sh
-    pnpm run dev
+    bun run dev
     ```
 
 6. Open [http://localhost:3000](http://localhost:3000) and you're done!
@@ -80,42 +80,3 @@ The default emotions are:
 - [Neutral] - For casual conversation
 
 Have a nice chat!
-
-```
-Waifu-AI
-├─ .gitignore
-├─ next.config.js
-├─ package.json
-├─ pnpm-lock.yaml
-├─ postcss.config.cjs
-├─ prettier.config.js
-├─ public
-│  ├─ layerfull.svg
-│  ├─ live2dcubismcore.min.js
-│  ├─ model
-├─ README.md
-├─ src
-│  ├─ app
-│  │  ├─ api
-│  │  │  ├─ chat
-│  │  │  │  └─ route.ts
-│  │  │  └─ synthasize
-│  │  │     └─ route.ts
-│  │  ├─ layout.tsx
-│  │  └─ page.tsx
-│  ├─ atoms
-│  │  └─ ChatAtom.ts
-│  ├─ components
-│  │  ├─ ChatInput.tsx
-│  │  ├─ ChatterBox.tsx
-│  │  ├─ Model.tsx
-│  │  └─ Spinner.tsx
-│  ├─ env.js
-│  └─ styles
-│     └─ globals.css
-├─ static
-│  └─ favicon.ico
-├─ tailwind.config.ts
-└─ tsconfig.json
-
-```
