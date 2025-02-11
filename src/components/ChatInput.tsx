@@ -20,7 +20,6 @@ export default function ChatInput() {
   const [lastMessage, setLastMessage] = useAtom(lastMessageAtom);
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
   const [input, setInput] = useState("");
-  const deferredInput = useDeferredValue(input);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const audioQueueRef = useRef<AudioBuffer[]>([]);
