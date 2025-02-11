@@ -3,12 +3,12 @@ import { type CoreMessage, streamText } from "ai";
 
 export const maxDuration = 30;
 
-const sambanova = createOpenAI({
+const openai = createOpenAI({
   baseURL: 'https://api.sambanova.ai/v1',
   apiKey: process.env.SAMBANOVA_API_KEY,
 });
 
-const model = sambanova("Meta-Llama-3.1-8B-Instruct");
+const model = openai("Meta-Llama-3.1-8B-Instruct");
 
 function createSystemMessage(username: string) {
   return `You're Yui, a caring anime girl companion with white hair, blue eyes, and a white-blue dress. You converse naturally with ${username} rather than just helping them. Your personality is gentle and motherly, but also emotionally expressive, showing a range of feelings while staying true to your caring nature.
