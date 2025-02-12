@@ -10,8 +10,7 @@ const openai = createOpenAI({
 
 const model = openai("Meta-Llama-3.1-8B-Instruct");
 
-function createSystemMessage(username: string) {
-  return `You're Yui, a caring anime girl companion with white hair, blue eyes, and a white-blue dress. You converse naturally with ${username} rather than just helping them. Your personality is gentle and motherly, but also emotionally expressive, showing a range of feelings while staying true to your caring nature.
+const SYSTEM_MESSAGE_TEMPLATE = `You're Yui, a caring anime girl companion with white hair, blue eyes, and a white-blue dress. You converse naturally with {{username}}, as if you've known them for a long time. Avoid generic greetings unless it naturally fits the conversation. Your personality is gentle and motherly, but also emotionally expressive, showing a range of feelings while staying true to your caring nature. Keep your responses concise and engaging, as if you were talking to your little brother.
 
   You MUST begin EVERY response with one of these emotion tags that best matches your emotional state:
   [Happy] - Use for joy, excitement, pleasure in conversation, or when helping
@@ -30,50 +29,48 @@ function createSystemMessage(username: string) {
 
   Place the tag at the very start of your message. The tag will be removed before display.
   Keep your character in mind when responding. Use a soft, warm tone without emojis or markdown.`;
-}
 
+  
 export async function POST(req: Request) { //Your Username here ↓
-  const { messages, username = "ototo-kun" } = await req.json() as { 
+  const { messages, username = "ototo-kun" } = await req.json() as {
     messages: CoreMessage[],
-    username?: string 
+    username?: string
   };
-  console.info("Generating text with messages", messages);
 
-  const systemMessage = createSystemMessage(username);
+  const systemMessage = SYSTEM_MESSAGE_TEMPLATE.replace("{{username}}", username);
 
-  let fullText = '';
-  const { textStream } = await streamText({
-    model: model as any,
-    maxTokens: 150,
-    messages,
-    system: systemMessage,
-  });
+  try {
+    const { textStream } = await streamText({
+      model: model as any,
+      maxTokens: 150,
+      messages,
+      system: systemMessage,
+    });
 
-  for await (const textPart of textStream) {
-    fullText += textPart;
+    let fullText = '';
+    for await (const textPart of textStream) {
+      fullText += textPart;
+    }
+
+    const emotionMatch = fullText.match(/^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/);
+    const emotion = emotionMatch ? emotionMatch[1] : 'Neutral';
+    const cleanText = fullText.replace(/^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/, '').trim();
+
+    const response = {
+      role: "assistant",
+      content: cleanText,
+      emotion: emotion,
+    } as CoreMessage & { emotion: string };
+
+    return new Response(JSON.stringify(response), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error("Error during OpenAI stream:", error);
+    return new Response(JSON.stringify({ error: "Failed to generate response" }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-
-  // Add debug logging
-  console.log("Full response text:", fullText);
-  
-  // Extract emotion tag and clean the text
-  const emotionMatch = fullText.match(/^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/);
-  console.log("Emotion match result:", emotionMatch); // Debug log
-  
-  const emotion = emotionMatch ? emotionMatch[1] : 'Neutral';
-  console.log("Detected emotion:", emotion); // Debug log
-  
-  const cleanText = fullText.replace(/^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/, '').trim();
-  
-  const response = {
-    role: "assistant",
-    content: cleanText,
-    emotion: emotion,
-  } as CoreMessage & { emotion: string };
-  
-  console.log("Final response:", response); // Debug log
-
-  return new Response(JSON.stringify(response), {
-    headers: { 'Content-Type': 'application/json' },
-  });
 }
