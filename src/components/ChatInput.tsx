@@ -2,7 +2,7 @@
 
 import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
-import { useEffect, useRef, useState, useCallback, useDeferredValue } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { IoSend } from "react-icons/io5";
 import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
@@ -10,31 +10,27 @@ import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/Chat
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-interface IWindow extends Window {
-  SpeechRecognition: any;
-  webkitSpeechRecognition: any;
-}
+type SpeechRecognition = any;
 
 export default function ChatInput() {
   const [messages, setMessages] = useAtom(messageHistoryAtom);
   const [lastMessage, setLastMessage] = useAtom(lastMessageAtom);
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
   const [input, setInput] = useState("");
+  const [isHovered, setIsHovered] = useState(false);
+  const [isAudioContextReady, setIsAudioContextReady] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const audioQueueRef = useRef<AudioBuffer[]>([]);
   const isPlayingRef = useRef<boolean>(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isAudioContextReady, setIsAudioContextReady] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [transcript, setTranscript] = useState("");
 
   useEffect(() => {
-    const windowWithSpeech = window as unknown as IWindow;
-    const SpeechRecognition = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
-
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = true;
@@ -70,22 +66,6 @@ export default function ChatInput() {
     };
   }, []);
 
-  const toggleListening = useCallback(() => {
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in your browser.');
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.start();
-      setTranscript("");
-      inputRef.current?.focus();
-    }
-    setIsListening(prev => !prev);
-  }, [isListening]);
-
   useEffect(() => {
     const handleUserGesture = async () => {
       if (!audioContextRef.current) {
@@ -106,6 +86,22 @@ export default function ChatInput() {
       isPlayingRef.current = false;
     };
   }, []);
+
+  const toggleListening = useCallback(() => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in your browser.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+      setTranscript("");
+      inputRef.current?.focus();
+    }
+    setIsListening(prev => !prev);
+  }, [isListening]);
 
   const synthesizeSentence = useCallback(async (sentence: string): Promise<AudioBuffer | null> => {
     try {
@@ -175,20 +171,22 @@ export default function ChatInput() {
       setIsLoading(false);
   
       if (typeof textResult.content === 'string') {
-        const sentences = textResult.content.split(/(?<=\.|\?|!)/).map(s => s.trim()).filter(Boolean);
-        
-        (async () => {
-          for (const sentence of sentences) {
-            const audioBuffer = await synthesizeSentence(sentence);
-            if (audioBuffer) {
-              audioQueueRef.current.push(audioBuffer);
+        const sentences = textResult.content.match(/[^.!?]+[.!?]+|\S+/g) || [];
+        const batchSize = 5;
+        for (let i = 0; i < sentences.length; i += batchSize) {
+          const batch = sentences.slice(i, i + batchSize);
+          const audioBuffers = await Promise.all(batch.map(sentence => synthesizeSentence(sentence.trim())));
+          
+          audioBuffers.forEach(buffer => {
+            if (buffer) {
+              audioQueueRef.current.push(buffer);
               if (!isPlayingRef.current && isAudioContextReady) {
                 isPlayingRef.current = true;
                 playNextSentence();
               }
             }
-          }
-        })();
+          });
+        }
       }
     } catch (error) {
       console.error("handleSubmit error:", error);
@@ -201,39 +199,29 @@ export default function ChatInput() {
     <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       <form onSubmit={handleSubmit}>
         <div className={`flex w-full items-center overflow-hidden rounded-[12px] bg-white shadow transition-all duration-300 ${isHovered || input ? 'border-[rgb(196,191,228)] shadow-lg scale-105' : 'border-transparent'} border-2`}>
-          <div className="flex h-full items-center justify-center px-4">
-            <button
-              type="button"
-              onClick={toggleListening}
-              disabled={isLoading}
-              aria-label={isListening ? "Stop listening" : "Start listening"}
-              className={`p-1 rounded-full ${isListening ? 'bg-red-100' : 'hover:bg-gray-100'}`}
-            >
-              {isListening ? (
-                <FaMicrophoneSlash className="text-red-500" />
-              ) : (
-                <FaMicrophone className="text-gray-500 hover:text-gray-700" />
-              )}
-            </button>
-          </div>
-          <div className="relative flex-1">
-            <input
-              ref={inputRef}
-              className="h-full w-full px-2 py-2 text-neutral-800 outline-none"
-              type="text"
-              placeholder={isListening ? transcript || "Listening..." : "Enter your message..."}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSubmit(e as any)}
-              disabled={isLoading}
-              aria-label="Chat input"
-            />
-          </div>
-          <div className="flex h-full items-center justify-center px-4">
-            <button type="submit" disabled={isLoading} aria-label="Send message">
-              <IoSend className="text-blue-400 transition-colors hover:text-blue-500" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={toggleListening}
+            disabled={isLoading}
+            aria-label={isListening ? "Stop listening" : "Start listening"}
+            className={`p-1 rounded-full ${isListening ? 'bg-red-100' : 'hover:bg-gray-100'} mx-4`}
+          >
+            {isListening ? <FaMicrophoneSlash className="text-red-500" /> : <FaMicrophone className="text-gray-500 hover:text-gray-700" />}
+          </button>
+          <input
+            ref={inputRef}
+            className="h-full w-full px-2 py-2 text-neutral-800 outline-none"
+            type="text"
+            placeholder={isListening ? transcript || "Listening..." : "Enter your message..."}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSubmit(e as any)}
+            disabled={isLoading}
+            aria-label="Chat input"
+          />
+          <button type="submit" disabled={isLoading} aria-label="Send message" className="mx-4">
+            <IoSend className="text-blue-400 transition-colors hover:text-blue-500" />
+          </button>
         </div>
       </form>
     </div>
