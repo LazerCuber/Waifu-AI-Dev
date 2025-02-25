@@ -1,6 +1,7 @@
 ## Credits to the [original repo](https://github.com/unteifu/wAIfu) 
 
 # So what is this for?:
+- Powered by Preact™
 - Some more performance optimizations
 - Latency improvements
 - Live2d lag fix
