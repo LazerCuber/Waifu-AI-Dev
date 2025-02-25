@@ -1,4 +1,4 @@
-export default function Spinner() {
+export function Spinner() {
   return (
     <div className="rounded-lg p-4 lg:overflow-visible">
       <svg className="h-8 w-8 animate-spin" viewBox="0 0 100 100">

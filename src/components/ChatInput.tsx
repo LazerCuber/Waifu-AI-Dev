@@ -1,18 +1,13 @@
-"use client";
-
 import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import { IoSend } from "react-icons/io5";
 import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
 
-export const dynamic = "force-dynamic";
-export const maxDuration = 30;
-
 type SpeechRecognition = any;
 
-export default function ChatInput() {
+export function ChatInput() {
   const [messages, setMessages] = useAtom(messageHistoryAtom);
   const [lastMessage, setLastMessage] = useAtom(lastMessageAtom);
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
@@ -196,31 +191,39 @@ export default function ChatInput() {
   }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady]);
 
   return (
-    <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+    <div className="absolute bottom-10 h-12 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       <form onSubmit={handleSubmit}>
-        <div className={`flex w-full items-center overflow-hidden rounded-[12px] bg-white shadow transition-all duration-300 ${isHovered || input ? 'border-[rgb(196,191,228)] shadow-lg scale-105' : 'border-transparent'} border-2`}>
+        <div className={`flex w-full items-center overflow-hidden rounded-[14px] bg-white/95 backdrop-blur-sm shadow-lg transition-all duration-300 ${isHovered || input ? 'border-[rgb(196,191,228)] shadow-xl scale-[1.02]' : 'border-transparent'} border-2`}>
           <button
             type="button"
             onClick={toggleListening}
             disabled={isLoading}
             aria-label={isListening ? "Stop listening" : "Start listening"}
-            className={`p-1 rounded-full ${isListening ? 'bg-red-100' : 'hover:bg-gray-100'} mx-4`}
+            className={`p-2 rounded-full ${isListening ? 'bg-red-100' : 'hover:bg-gray-100'} mx-4 transition-colors`}
           >
-            {isListening ? <FaMicrophoneSlash className="text-red-500" /> : <FaMicrophone className="text-gray-500 hover:text-gray-700" />}
+            {isListening ? 
+              <FaMicrophoneSlash className="text-red-500 h-5 w-5" /> : 
+              <FaMicrophone className="text-gray-500 hover:text-gray-700 h-5 w-5" />
+            }
           </button>
           <input
             ref={inputRef}
-            className="h-full w-full px-2 py-2 text-neutral-800 outline-none"
+            className="h-full w-full px-2 py-3 text-gray-800 outline-none font-geist placeholder:text-gray-400"
             type="text"
             placeholder={isListening ? transcript || "Listening..." : "Enter your message..."}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => setInput(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSubmit(e as any)}
             disabled={isLoading}
             aria-label="Chat input"
           />
-          <button type="submit" disabled={isLoading} aria-label="Send message" className="mx-4">
-            <IoSend className="text-blue-400 transition-colors hover:text-blue-500" />
+          <button 
+            type="submit" 
+            disabled={isLoading} 
+            aria-label="Send message" 
+            className="mx-4 p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+          >
+            <IoSend className="text-blue-500 h-5 w-5" />
           </button>
         </div>
       </form>

@@ -1,18 +1,27 @@
+/** @jsxImportSource preact */
 import * as PIXI from 'pixi.js';
 import { Application } from 'pixi.js';
 import { useAtomValue } from 'jotai';
-import { lastMessageAtom } from '~/atoms/ChatAtom';
-import React, { useEffect, useRef, useCallback, memo } from 'react';
+import { lastMessageAtom } from '../atoms/ChatAtom';
+import { useEffect, useRef, useCallback } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
-import { type CoreMessage } from "ai";
+import type { CoreMessage } from "ai";
 
-if (typeof window !== 'undefined') (window as any).PIXI = PIXI;
+// Initialize PIXI for Live2D
+if (typeof window !== 'undefined') {
+  (window as any).PIXI = PIXI;
+  // Ensure Cubism runtime is available
+  if (!(window as any).Live2DCubismCore) {
+    console.error('Live2DCubismCore is not loaded. Please check if live2dcubismcore.min.js is loaded properly.');
+  }
+}
 
 const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 
 const preloadModel = () => Live2DModel.from('/model/vanilla/vanilla.model3.json');
 
-const Model: React.FC = memo(() => {
+export const Model = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
   const modelRef = useRef<any>(null);
@@ -132,5 +141,3 @@ const Model: React.FC = memo(() => {
 
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
 });
-
-export default Model;
