@@ -1,6 +1,6 @@
-import { ChatterBox } from '~/components/ChatterBox';
-import { Model } from '~/components/Model';
-import { ChatInput } from '~/components/ChatInput';
+import { ChatterBox } from '../components/ChatterBox';
+import { Model } from '../components/Model';
+import { ChatInput } from '../components/ChatInput';
 import { GeistSans } from "geist/font/sans";
 
 export function App() {
