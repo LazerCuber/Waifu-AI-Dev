@@ -1,13 +1,16 @@
+/** @jsxImportSource preact */
+import { h, FunctionComponent } from 'preact';
+import type { JSX } from 'preact';
 import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import { IoSend } from "react-icons/io5";
 import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
-import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
+import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "../atoms/ChatAtom";
 
 type SpeechRecognition = any;
 
-export function ChatInput() {
+export const ChatInput: FunctionComponent = () => {
   const [messages, setMessages] = useAtom(messageHistoryAtom);
   const [lastMessage, setLastMessage] = useAtom(lastMessageAtom);
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
@@ -143,7 +146,7 @@ export function ChatInput() {
     playNextSentence();
   }, [playSentence]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (e: JSX.TargetedSubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
   

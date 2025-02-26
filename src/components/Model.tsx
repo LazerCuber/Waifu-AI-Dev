@@ -7,6 +7,8 @@ import { useEffect, useRef, useCallback } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
 import type { CoreMessage } from "ai";
+import { h } from 'preact';
+import type { FunctionComponent } from 'preact';
 
 // Initialize PIXI for Live2D
 if (typeof window !== 'undefined') {
@@ -21,7 +23,7 @@ const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 
 const preloadModel = () => Live2DModel.from('/model/vanilla/vanilla.model3.json');
 
-export const Model = memo(() => {
+export const Model: FunctionComponent = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
   const modelRef = useRef<any>(null);

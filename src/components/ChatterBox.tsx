@@ -1,4 +1,5 @@
 /** @jsxImportSource preact */
+import { h, FunctionComponent } from 'preact';
 import { useAtom } from "jotai";
 import { useEffect, useState } from "preact/hooks";
 import { isLoadingAtom, lastMessageAtom } from "../atoms/ChatAtom";
@@ -20,7 +21,7 @@ const messageAppearStyles = `
   }
 `;
 
-export function ChatterBox() {
+export const ChatterBox: FunctionComponent = () => {
   const [message] = useAtom(lastMessageAtom);
   const [isLoading] = useAtom(isLoadingAtom);
   const [key, setKey] = useState(0);
