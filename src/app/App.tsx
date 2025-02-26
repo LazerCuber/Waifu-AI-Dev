@@ -1,6 +1,7 @@
 import { ChatterBox } from '~/components/ChatterBox';
 import { Model } from '~/components/Model';
 import { ChatInput } from '~/components/ChatInput';
+import { GeistSans } from "geist/font/sans";
 
 export function App() {
   return (
@@ -10,6 +11,11 @@ export function App() {
       </div>
       <ChatterBox />
       <ChatInput />
+      <style jsx>{`
+        main {
+          font-family: 'GeistSans', sans-serif;
+        }
+      `}</style>
     </main>
   );
 }
