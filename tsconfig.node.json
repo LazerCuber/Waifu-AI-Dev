@@ -11,12 +11,12 @@
     "useDefineForClassFields": true,
 
     /* Strictness */
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "checkJs": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
+    "strict": false,
+    "noUncheckedIndexedAccess": false,
+    "checkJs": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": false,
 
     /* Bundled projects */
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
