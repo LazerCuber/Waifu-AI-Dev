@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState, memo } from 'react';
+import { useEffect, useState } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
 import ChatInput from "~/components/ChatInput";
 
-const Bg = memo(() => (
+const Bg = React.memo(() => (
   <div className="absolute inset-0 z-0 overflow-hidden bg-cover bg-center" style={{backgroundImage:'url(/one.avif)'}}/>
 ));
 

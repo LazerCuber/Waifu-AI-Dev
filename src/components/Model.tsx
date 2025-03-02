@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { Application } from 'pixi.js';
 import { useAtomValue } from 'jotai';
 import { lastMessageAtom } from '~/atoms/ChatAtom';
-import React, { useEffect, useRef, useCallback, memo } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Live2DModel } from 'pixi-live2d-display/cubism4';
 import { type CoreMessage } from "ai";
 
@@ -12,7 +12,7 @@ const SENSITIVITY = 0.95, SMOOTHNESS = 1, RECENTER_DELAY = 1000;
 
 const preloadModel = () => Live2DModel.from('/model/vanilla/vanilla.model3.json');
 
-const Model: React.FC = memo(() => {
+const Model = React.memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastMessage = useAtomValue(lastMessageAtom);
   const modelRef = useRef<any>(null);
