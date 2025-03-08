@@ -2,15 +2,15 @@
 
 import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { IoSend } from "react-icons/io5";
 import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
 
-type SpeechRecognition = any;
-
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+type SpeechRecognition = any;
 
 export default function ChatInput() {
   const [messages, setMessages] = useAtom(messageHistoryAtom);
@@ -18,171 +18,159 @@ export default function ChatInput() {
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
   const [input, setInput] = useState("");
   const [isHovered, setIsHovered] = useState(false);
+  const [isAudioContextReady, setIsAudioContextReady] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [isAudioContextReady, setIsAudioContextReady] = useState(false);
 
-  const refs = {
-    audioContext: useRef<AudioContext | null>(null),
-    sourceNode: useRef<AudioBufferSourceNode | null>(null),
-    audioQueue: useRef<AudioBuffer[]>([]),
-    isPlaying: useRef(false),
-    recognition: useRef<SpeechRecognition | null>(null),
-    input: useRef<HTMLInputElement | null>(null),
-  };
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioQueueRef = useRef<AudioBuffer[]>([]);
+  const isPlayingRef = useRef<boolean>(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    refs.recognition.current = recognition;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (e: any) => {
-      let interim = '';
-      let final = '';
-      for (let i = e.resultIndex; i < e.results.length; ++i) {
-        const res = e.results[i];
-        res.isFinal ? (final += res[0].transcript) : (interim += res[0].transcript);
-      }
-      setTranscript(interim || final);
-      if (final) setInput((prev) => prev + final);
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+      recognitionRef.current.onresult = (event: any) => {
+        let interimTranscript = '', finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+          else interimTranscript += event.results[i][0].transcript;
+        }
+        setTranscript(interimTranscript || finalTranscript);
+        if (finalTranscript) setInput(prev => prev + finalTranscript);
+      };
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => setIsListening(false);
+    }
+    return () => {
+      if (recognitionRef.current) recognitionRef.current.stop();
     };
-
-    recognition.onerror = (e: any) => {
-      console.error('Speech error:', e.error);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => setIsListening(false);
-
-    return () => recognition.stop();
   }, []);
 
   useEffect(() => {
-    const handleGesture = async () => {
-      if (!refs.audioContext.current) refs.audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (refs.audioContext.current.state === 'suspended') await refs.audioContext.current.resume();
+    const handleUserGesture = async () => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioContextRef.current.state === 'suspended') await audioContextRef.current.resume();
       setIsAudioContextReady(true);
     };
-
-    const events = ['click', 'touchstart'];
-    events.forEach((e) => document.addEventListener(e, handleGesture));
-
+    ['click', 'touchstart'].forEach(event => document.addEventListener(event, handleUserGesture));
     return () => {
-      events.forEach((e) => document.removeEventListener(e, handleGesture));
-      refs.audioContext.current?.close();
-      refs.sourceNode.current?.disconnect();
-      refs.isPlaying.current = false;
-      refs.audioQueue.current = [];
+      ['click', 'touchstart'].forEach(event => document.removeEventListener(event, handleUserGesture));
+      audioContextRef.current?.close();
+      sourceNodeRef.current?.stop();
+      sourceNodeRef.current?.disconnect();
+      audioQueueRef.current = [];
+      isPlayingRef.current = false;
     };
   }, []);
 
   const toggleListening = useCallback(() => {
-    const recognition = refs.recognition.current;
-    if (!recognition) {
-      alert('No speech support.');
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in your browser.');
       return;
     }
-
-    isListening ? recognition.stop() : (recognition.start(), setTranscript(""), refs.input.current?.focus());
-    setIsListening((prev) => !prev);
+    if (isListening) recognitionRef.current.stop();
+    else {
+      recognitionRef.current.start();
+      setTranscript("");
+      inputRef.current?.focus();
+    }
+    setIsListening(prev => !prev);
   }, [isListening]);
 
   const synthesizeSentence = useCallback(async (sentence: string): Promise<AudioBuffer | null> => {
     try {
-      const resp = await fetch("/api/synthasize", {
+      const response = await fetch("/api/synthasize", {
         method: "POST",
         body: JSON.stringify({ message: { content: sentence, role: "assistant" } }),
         headers: { "Content-Type": "application/json" },
       });
-      if (!resp.ok) throw new Error(`Synth fail: ${resp.statusText}`);
-      return await refs.audioContext.current!.decodeAudioData(await resp.arrayBuffer());
+      if (!response.ok) throw new Error(`Failed to synthesize: ${response.statusText}`);
+      const arrayBuffer = await response.arrayBuffer();
+      return await audioContextRef.current!.decodeAudioData(arrayBuffer);
     } catch (error) {
-      console.error("Synth error:", error);
+      console.error("synthesizeSentence error:", error);
       return null;
     }
   }, []);
 
-  const playSentence = useCallback((buffer: AudioBuffer): Promise<void> => {
+  const playSentence = useCallback((audioBuffer: AudioBuffer): Promise<void> => {
     return new Promise((resolve) => {
-      const context = refs.audioContext.current;
-      if (!context) return resolve();
-
-      if (context.state === 'suspended') context.resume().catch(console.error);
-
-      const source = context.createBufferSource();
-      refs.sourceNode.current?.disconnect();
-      refs.sourceNode.current = source;
-      source.buffer = buffer;
-      source.connect(context.destination);
-      source.onended = () => resolve();
-      source.start();
+      if (!audioContextRef.current) return resolve();
+      if (audioContextRef.current.state === 'suspended') audioContextRef.current.resume().catch(console.error);
+      sourceNodeRef.current?.stop();
+      sourceNodeRef.current?.disconnect();
+      sourceNodeRef.current = audioContextRef.current.createBufferSource();
+      sourceNodeRef.current.buffer = audioBuffer;
+      sourceNodeRef.current.connect(audioContextRef.current.destination);
+      sourceNodeRef.current.onended = () => resolve();
+      sourceNodeRef.current.start();
     });
   }, []);
 
-  const playNext = useCallback(async (): Promise<void> => {
-    if (!refs.audioQueue.current.length) {
-      refs.isPlaying.current = false;
+  const playNextSentence = useCallback(async (): Promise<void> => {
+    if (audioQueueRef.current.length === 0) {
+      isPlayingRef.current = false;
       return;
     }
-    const audio = refs.audioQueue.current.shift();
+    const audio = audioQueueRef.current.shift();
     if (audio) await playSentence(audio);
-    playNext();
+    playNextSentence();
   }, [playSentence]);
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (!input.trim() || isLoading) return;
-
-      setIsLoading(true);
-      const newMessages: CoreMessage[] = [...messages, { content: input, role: "user" }];
-      setMessages(newMessages);
-      setInput("");
-      setTranscript("");
-
-      try {
-        const resp = await fetch("/api/chat", {
-          method: "POST",
-          body: JSON.stringify({ messages: newMessages }),
-          headers: { "Content-Type": "application/json" },
-        });
-        const textResult = (await resp.json()) as CoreMessage;
-        setLastMessage(textResult);
-        setMessages([...newMessages, textResult]);
-        setIsLoading(false);
-
-        if (typeof textResult.content === "string") {
-          const sentences = textResult.content.match(/[^.!?]+[.!?]+|\S+/g) || [];
-          const batchSize = 5;
-
-          for (let i = 0; i < sentences.length; i += batchSize) {
-            const batch = sentences.slice(i, i + batchSize);
-            const audioBuffers = await Promise.all(batch.map((s) => synthesizeSentence(s.trim())));
-
-            audioBuffers.forEach((buffer) => {
-              if (buffer) {
-                refs.audioQueue.current.push(buffer);
-                if (!refs.isPlaying.current && isAudioContextReady) {
-                  refs.isPlaying.current = true;
-                  playNext();
-                }
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    setIsLoading(true);
+    const newMessages: CoreMessage[] = [...messages, { content: input, role: "user" }];
+    setMessages(newMessages);
+    setInput("");
+    setTranscript("");
+  
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({ messages: newMessages }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const textResult = (await response.json()) as CoreMessage;
+      setLastMessage(textResult);
+      setMessages([...newMessages, textResult]);
+      setIsLoading(false);
+  
+      if (typeof textResult.content === 'string') {
+        const sentences = textResult.content.match(/[^.!?]+[.!?]+|\S+/g) || [];
+        for (let i = 0; i < sentences.length; i += 5) {
+          const batch = sentences.slice(i, i + 5);
+          const audioBuffers = await Promise.all(batch.map(sentence => synthesizeSentence(sentence.trim())));
+          audioBuffers.forEach(buffer => {
+            if (buffer) {
+              audioQueueRef.current.push(buffer);
+              if (!isPlayingRef.current && isAudioContextReady) {
+                isPlayingRef.current = true;
+                playNextSentence();
               }
-            });
-          }
+            }
+          });
         }
-      } catch (error) {
-        console.error("Submit error:", error);
-        alert("Message error.");
-        setIsLoading(false);
       }
-    },
-    [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNext, isAudioContextReady]
-  );
+    } catch (error) {
+      console.error("handleSubmit error:", error);
+      alert("An error occurred while sending your message.");
+      setIsLoading(false);
+    }
+  }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady]);
 
   return (
     <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
@@ -198,7 +186,7 @@ export default function ChatInput() {
             {isListening ? <FaMicrophoneSlash className="text-red-500" /> : <FaMicrophone className="text-gray-500 hover:text-gray-700" />}
           </button>
           <input
-            ref={refs.input}
+            ref={inputRef}
             className="h-full w-full px-2 py-2 text-neutral-800 outline-none"
             type="text"
             placeholder={isListening ? transcript || "Listening..." : "Enter your message..."}
