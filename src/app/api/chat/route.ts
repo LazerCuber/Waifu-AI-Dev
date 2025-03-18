@@ -47,17 +47,13 @@ export async function POST(req: Request) {
     });
 
     let fullText = '';
-    const textParts: string[] = []; // Use an array to collect text parts
-
     for await (const textPart of textStream) {
-      textParts.push(textPart); // Collect each part
+      fullText += textPart;
     }
 
-    fullText = textParts.join(''); // Join all parts at once
-
-    const emotionMatch = /^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/.exec(fullText); // Use .exec()
-    const emotion = emotionMatch ? emotionMatch[1] : 'Neutral';
-    const cleanText = emotionMatch ? fullText.substring(emotionMatch[0].length).trim() : fullText.trim(); //More efficient substring
+    const emotionMatch = /^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/.exec(fullText);
+    const emotion = emotionMatch?.[1] || 'Neutral'; // Use optional chaining
+    const cleanText = emotionMatch ? fullText.slice(emotionMatch[0].length).trim() : fullText.trim();
 
     const response = {
       role: "assistant",
