@@ -30,8 +30,7 @@ const SYSTEM_MESSAGE_TEMPLATE = `You're Yui, a caring anime girl companion with 
   Place the tag at the very start of your message. The tag will be removed before display.
   Keep your character in mind when responding. Use a soft, warm tone without emojis or markdown.`;
 
-  
-export async function POST(req: Request) { //Your Username here ↓
+export async function POST(req: Request) {
   const { messages, username = "ototo-kun" } = await req.json() as {
     messages: CoreMessage[],
     username?: string
@@ -48,13 +47,17 @@ export async function POST(req: Request) { //Your Username here ↓
     });
 
     let fullText = '';
+    const textParts: string[] = []; // Use an array to collect text parts
+
     for await (const textPart of textStream) {
-      fullText += textPart;
+      textParts.push(textPart); // Collect each part
     }
 
-    const emotionMatch = fullText.match(/^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/);
+    fullText = textParts.join(''); // Join all parts at once
+
+    const emotionMatch = /^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/.exec(fullText); // Use .exec()
     const emotion = emotionMatch ? emotionMatch[1] : 'Neutral';
-    const cleanText = fullText.replace(/^\[(Happy|Sad|Scared|Angry|Joy|Neutral)\]/, '').trim();
+    const cleanText = emotionMatch ? fullText.substring(emotionMatch[0].length).trim() : fullText.trim(); //More efficient substring
 
     const response = {
       role: "assistant",
