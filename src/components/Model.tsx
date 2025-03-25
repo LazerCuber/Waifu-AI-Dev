@@ -41,9 +41,7 @@ const Model = React.memo(() => {
     }
   }, []);
 
-  const renderLoop = useCallback((deltaTime: number) => {
-    animateModel(deltaTime);
-  }, [animateModel]);
+  const renderLoop = useCallback((deltaTime: number) => animateModel(deltaTime), [animateModel]);
 
   useEffect(() => {
     (async () => {
@@ -63,25 +61,21 @@ const Model = React.memo(() => {
         updateModelSize();
 
         const handleMouseMove = (event: MouseEvent) => {
-          const rect = appRef.current?.view.getBoundingClientRect();
-          if (rect) {
-            const { clientX, clientY } = event;
-            mouseMoveRef.current.target = {
-              x: ((clientX - rect.left) / rect.width - 0.5) * 2 * SENSITIVITY,
-              y: -(((clientY - rect.top) / rect.height - 0.5) * 2 * SENSITIVITY),
-            };
-            mouseMoveRef.current.last = Date.now();
-          }
+          const rect = app.view.getBoundingClientRect();
+          const { clientX, clientY } = event;
+          mouseMoveRef.current.target = {
+            x: ((clientX - rect.left) / rect.width - 0.5) * 2 * SENSITIVITY,
+            y: -(((clientY - rect.top) / rect.height - 0.5) * 2 * SENSITIVITY),
+          };
+          mouseMoveRef.current.last = Date.now();
         };
-        window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
         app.ticker.add(renderLoop);
-
-        const handleResize = () => {
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('resize', () => {
           app.renderer.resize(window.innerWidth, window.innerHeight);
           updateModelSize();
-        };
-        window.addEventListener('resize', handleResize);
+        });
 
         console.log('Available expressions:', modelRef.current.internalModel.motionManager.definitions.expressions);
 
@@ -100,33 +94,30 @@ const Model = React.memo(() => {
     if (lastMessage?.role === 'assistant' && modelRef.current) {
       const duration = lastMessage.content.length * 55;
       const startTime = performance.now();
-      
       const emotion = (lastMessage as CoreMessage & { emotion?: string }).emotion || 'Neutral';
       console.log('Applying emotion:', emotion);
-      
+
       try {
-        if (modelRef.current.expression) {
-          modelRef.current.expression(emotion);
-        } else if (modelRef.current.internalModel.expressions) {
-          const expressionIndex = modelRef.current.internalModel.expressions.indexOf(emotion);
-          if (expressionIndex >= 0) {
-            modelRef.current.internalModel.expressions.setExpression(expressionIndex);
-          }
-        } else if (modelRef.current.internalModel.motionManager.expressionManager) {
-          const manager = modelRef.current.internalModel.motionManager.expressionManager;
-          manager.startMotion(emotion);
+        const model = modelRef.current;
+        if (model.expression) {
+          model.expression(emotion);
+        } else if (model.internalModel.expressions) {
+          const index = model.internalModel.expressions.indexOf(emotion);
+          if (index >= 0) model.internalModel.expressions.setExpression(index);
+        } else if (model.internalModel.motionManager.expressionManager) {
+          model.internalModel.motionManager.expressionManager.startMotion(emotion);
         }
       } catch (error) {
         console.error('Error applying expression:', error);
       }
 
-      const animate = (time: number) => {
+      const animateMouth = (time: number) => {
         const elapsedMS = time - startTime;
         modelRef.current.internalModel.coreModel.setParameterValueById('ParamMouthOpenY',
           elapsedMS < duration ? Math.sin(elapsedMS / 100) * 0.5 + 0.5 : 0);
-        if (elapsedMS < duration) requestAnimationFrame(animate);
+        if (elapsedMS < duration) requestAnimationFrame(animateMouth);
       };
-      requestAnimationFrame(animate);
+      requestAnimationFrame(animateMouth);
     }
   }, [lastMessage]);
 
