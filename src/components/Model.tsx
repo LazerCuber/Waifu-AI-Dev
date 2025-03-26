@@ -20,25 +20,24 @@ const Model = React.memo(() => {
   const mouseMoveRef = useRef({ last: 0, target: { x: 0, y: 0 }, current: { x: 0, y: 0 } });
 
   const updateModelSize = useCallback(() => {
-    const model = modelRef.current;
-    const app = appRef.current;
-    if (model && app) {
-      const scale = Math.min(app.screen.width / model.width, app.screen.height / model.height);
-      model.scale.set(scale);
-      model.position.set(app.screen.width / 2, app.screen.height * 0.85);
-    }
+    if (!modelRef.current || !appRef.current) return;
+    const scale = Math.min(
+      appRef.current.screen.width / modelRef.current.width,
+      appRef.current.screen.height / modelRef.current.height
+    );
+    modelRef.current.scale.set(scale);
+    modelRef.current.position.set(appRef.current.screen.width / 2, appRef.current.screen.height * 0.85);
   }, []);
 
   const animateModel = useCallback((deltaTime: number) => {
-    const model = modelRef.current;
-    if (model) {
-      const now = Date.now();
-      const factor = Math.max(0, Math.min((now - mouseMoveRef.current.last - RECENTER_DELAY) / 1000, 1));
-      const easeFactor = Math.sin(Math.PI * factor / 2);
-      mouseMoveRef.current.current.x += (mouseMoveRef.current.target.x * (1 - easeFactor) - mouseMoveRef.current.current.x) * SMOOTHNESS * deltaTime;
-      mouseMoveRef.current.current.y += (mouseMoveRef.current.target.y * (1 - easeFactor) - mouseMoveRef.current.current.y) * SMOOTHNESS * deltaTime;
-      model.internalModel.focusController?.focus(mouseMoveRef.current.current.x, mouseMoveRef.current.current.y);
-    }
+    if (!modelRef.current?.internalModel.focusController) return;
+    const now = Date.now();
+    const factor = Math.max(0, Math.min((now - mouseMoveRef.current.last - RECENTER_DELAY) / 1000, 1));
+    const easeFactor = Math.sin(Math.PI * factor / 2);
+    const { current, target } = mouseMoveRef.current;
+    current.x += (target.x * (1 - easeFactor) - current.x) * SMOOTHNESS * deltaTime;
+    current.y += (target.y * (1 - easeFactor) - current.y) * SMOOTHNESS * deltaTime;
+    modelRef.current.internalModel.focusController.focus(current.x, current.y);
   }, []);
 
   const renderLoop = useCallback((deltaTime: number) => animateModel(deltaTime), [animateModel]);
