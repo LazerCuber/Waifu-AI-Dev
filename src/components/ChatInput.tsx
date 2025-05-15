@@ -2,7 +2,7 @@
 
 import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { IoSend } from "react-icons/io5";
 import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
@@ -28,6 +28,7 @@ export default function ChatInput() {
   const isPlayingRef = useRef<boolean>(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const transcriptTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -36,15 +37,23 @@ export default function ChatInput() {
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
+      
       recognitionRef.current.onresult = (event: any) => {
+        if (transcriptTimeoutRef.current) clearTimeout(transcriptTimeoutRef.current);
+        
         let interimTranscript = '', finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
           else interimTranscript += event.results[i][0].transcript;
         }
-        setTranscript(interimTranscript || finalTranscript);
-        if (finalTranscript) setInput(prev => prev + finalTranscript);
+
+        // Batch updates to reduce re-renders
+        transcriptTimeoutRef.current = setTimeout(() => {
+          setTranscript(interimTranscript || finalTranscript);
+          if (finalTranscript) setInput(prev => prev + finalTranscript);
+        }, 100); // Debounce updates to every 100ms
       };
+
       recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
@@ -53,6 +62,7 @@ export default function ChatInput() {
     }
     return () => {
       if (recognitionRef.current) recognitionRef.current.stop();
+      if (transcriptTimeoutRef.current) clearTimeout(transcriptTimeoutRef.current);
     };
   }, []);
 
@@ -73,6 +83,10 @@ export default function ChatInput() {
       audioQueueRef.current = [];
       isPlayingRef.current = false;
     };
+  }, []);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
   }, []);
 
   const toggleListening = useCallback(() => {
@@ -191,7 +205,7 @@ export default function ChatInput() {
             type="text"
             placeholder={isListening ? transcript || "Listening..." : "Enter your message..."}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSubmit(e as any)}
             disabled={isLoading}
             aria-label="Chat input"
