@@ -31,7 +31,7 @@ const SYSTEM_MESSAGE_TEMPLATE = `You're Yui, a caring anime girl companion with 
   Keep your character in mind when responding. Use a soft, warm tone without emojis or markdown.`;
 
 export async function POST(req: Request) {
-  const { messages, username = "ototo-kun" } = await req.json() as {
+  const { messages, username = "hayden" } = await req.json() as {
     messages: CoreMessage[],
     username?: string
   };
