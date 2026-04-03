@@ -4,11 +4,12 @@ import { type CoreMessage, streamText } from "ai";
 export const maxDuration = 30;
 
 const openai = createOpenAI({
-  baseURL: 'https://api.sambanova.ai/v1',
-  apiKey: process.env.SAMBANOVA_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-const model = openai("Meta-Llama-3.1-8B-Instruct");
+const model = openai("qwen/qwen3.6-plus:free");
+
 
 const SYSTEM_MESSAGE_TEMPLATE = `You're Yui, a caring anime girl companion with white hair, blue eyes, and a white-blue dress. You converse naturally with {{username}}, as if you've known them for a long time. Avoid generic greetings unless it naturally fits the conversation. Your personality is gentle and motherly, but also emotionally expressive, showing a range of feelings while staying true to your caring nature. Keep your responses concise and engaging, as if you were talking to your little brother.
 

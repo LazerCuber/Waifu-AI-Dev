@@ -110,7 +110,12 @@ export default function ChatInput() {
         body: JSON.stringify({ message: { content: sentence, role: "assistant" } }),
         headers: { "Content-Type": "application/json" },
       });
-      if (!response.ok) throw new Error(`Failed to synthesize: ${response.statusText}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to synthesize: ${errorData.details || response.statusText}`);
+      }
+      
       const arrayBuffer = await response.arrayBuffer();
       return await audioContextRef.current!.decodeAudioData(arrayBuffer);
     } catch (error) {
@@ -165,18 +170,15 @@ export default function ChatInput() {
   
       if (typeof textResult.content === 'string') {
         const sentences = textResult.content.match(/[^.!?]+[.!?]+|\S+/g) || [];
-        for (let i = 0; i < sentences.length; i += 5) {
-          const batch = sentences.slice(i, i + 5);
-          const audioBuffers = await Promise.all(batch.map(sentence => synthesizeSentence(sentence.trim())));
-          audioBuffers.forEach(buffer => {
-            if (buffer) {
-              audioQueueRef.current.push(buffer);
-              if (!isPlayingRef.current && isAudioContextReady) {
-                isPlayingRef.current = true;
-                playNextSentence();
-              }
+        for (const sentence of sentences) {
+          const buffer = await synthesizeSentence(sentence.trim());
+          if (buffer) {
+            audioQueueRef.current.push(buffer);
+            if (!isPlayingRef.current && isAudioContextReady) {
+              isPlayingRef.current = true;
+              playNextSentence();
             }
-          });
+          }
         }
       }
     } catch (error) {
