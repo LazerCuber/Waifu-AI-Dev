@@ -396,9 +396,24 @@ const Model = React.memo(() => {
           console.log("[v0] Model already initialized, skipping...");
           return;
         }
-        isInitializedRef.current = true;
 
-        const app = new Application({
+        // Check if PIXI and Live2D are available BEFORE creating Application
+        if (typeof PIXI === "undefined" || !PIXI.Application) {
+          console.log("[v0] PIXI not loaded yet, retrying in 500ms...");
+          setTimeout(initApp, 500);
+          return;
+        }
+
+        if (typeof Live2DModel === "undefined") {
+          console.log("[v0] Live2DModel not loaded yet, retrying in 500ms...");
+          setTimeout(initApp, 500);
+          return;
+        }
+
+        isInitializedRef.current = true;
+        console.log("[v0] Initializing PIXI Application...");
+
+        const app = new PIXI.Application({
           view: canvasRef.current,
           backgroundAlpha: 0,
           resizeTo: window,
@@ -406,27 +421,29 @@ const Model = React.memo(() => {
           autoDensity: true,
         });
         appRef.current = app;
+        console.log("[v0] PIXI Application created successfully");
 
         console.log("[v0] Loading Live2D model from /model/vanilla/vanilla.model3.json...");
         
-        // Check if PIXI is available
-        if (!PIXI || !PIXI.Loader) {
-          console.warn("[v0] PIXI not fully loaded yet, retrying...");
-          isInitializedRef.current = false;
-          setTimeout(initApp, 500);
-          return;
-        }
-
         const model = await preloadModel();
         if (!model) {
           const err = "Model loading failed - null model returned";
           console.error("[v0]", err);
           setError(err);
+          isInitializedRef.current = false;
           return;
         }
         
         console.log("[v0] Model loaded successfully");
         modelRef.current = model;
+        
+        if (!app.stage) {
+          console.error("[v0] App stage is null - Application initialization failed");
+          setError("Failed to initialize PIXI renderer");
+          isInitializedRef.current = false;
+          return;
+        }
+
         app.stage.addChild(model);
         model.anchor.set(0.5, 0.78);
         updateModelSize();
@@ -459,6 +476,7 @@ const Model = React.memo(() => {
         isInitializedRef.current = false;
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.error("[v0] Error setting up Live2D model:", errorMsg);
+        console.error("[v0] Stack:", error instanceof Error ? error.stack : "");
         setError(errorMsg);
       }
     };
