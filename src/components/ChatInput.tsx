@@ -193,11 +193,10 @@ export default function ChatInput() {
         <div 
           className={`
             flex items-center gap-3 px-4 py-3
-            bg-white/10 backdrop-blur-xl
-            border border-white/20
+            border border-white/10
             rounded-2xl
             transition-all duration-300 ease-out
-            ${showActive ? 'bg-white/15 border-white/30 shadow-lg shadow-black/5' : ''}
+            ${showActive ? 'border-white/30 shadow-lg shadow-black/5' : ''}
           `}
         >
           {/* Mic Button */}

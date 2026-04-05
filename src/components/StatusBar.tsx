@@ -53,27 +53,27 @@ export default function StatusBar({ live2dReady }: StatusBarProps) {
   return (
     <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
       {/* Live2D Status */}
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/10">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-lg border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
         <div 
           className={`w-1.5 h-1.5 rounded-full ${
-            live2dReady ? "bg-emerald-400" : "bg-amber-400 animate-pulse"
+            live2dReady ? "bg-emerald-500 dark:bg-emerald-400" : "bg-amber-500 dark:bg-amber-400 animate-pulse"
           }`} 
         />
-        <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
+        <span className="text-[11px] font-medium text-black/60 dark:text-white/60 uppercase tracking-wider">
           {live2dReady ? "Live2D" : "Loading"}
         </span>
       </div>
 
       {/* FPS Counter */}
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/10">
-        <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-lg border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
+        <span className="text-[11px] font-medium text-black/60 dark:text-white/60 uppercase tracking-wider">
           {fps} FPS
         </span>
       </div>
 
       {/* Time */}
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/10">
-        <span className="text-[11px] font-medium text-white/60 tracking-wider">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-lg border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
+        <span className="text-[11px] font-medium text-black/60 dark:text-white/60 tracking-wider">
           {time}
         </span>
       </div>
