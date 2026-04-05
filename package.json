@@ -13,6 +13,7 @@
   "dependencies": {
     "@ai-sdk/mistral": "^0.0.41",
     "@ai-sdk/openai": "^0.0.24",
+    "@next/bundle-analyzer": "^15.1.4",
     "@t3-oss/env-nextjs": "^0.10.1",
     "ai": "^3.4.33",
     "elevenlabs": "^0.7.0",
