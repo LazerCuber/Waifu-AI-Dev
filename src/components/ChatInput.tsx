@@ -2,9 +2,7 @@
 
 import type { CoreMessage } from "ai";
 import { useAtom } from "jotai";
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { IoSend } from "react-icons/io5";
-import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { isLoadingAtom, lastMessageAtom, messageHistoryAtom } from "~/atoms/ChatAtom";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +12,10 @@ type SpeechRecognition = any;
 
 export default function ChatInput() {
   const [messages, setMessages] = useAtom(messageHistoryAtom);
-  const [lastMessage, setLastMessage] = useAtom(lastMessageAtom);
+  const [, setLastMessage] = useAtom(lastMessageAtom);
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
   const [input, setInput] = useState("");
-  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [isAudioContextReady, setIsAudioContextReady] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -47,11 +45,10 @@ export default function ChatInput() {
           else interimTranscript += event.results[i][0].transcript;
         }
 
-        // Batch updates to reduce re-renders
         transcriptTimeoutRef.current = setTimeout(() => {
           setTranscript(interimTranscript || finalTranscript);
           if (finalTranscript) setInput(prev => prev + finalTranscript);
-        }, 100); // Debounce updates to every 100ms
+        }, 100);
       };
 
       recognitionRef.current.onerror = (event: any) => {
@@ -186,34 +183,110 @@ export default function ChatInput() {
       alert("An error occurred while sending your message.");
       setIsLoading(false);
     }
-  }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady]);
+  }, [messages, input, setMessages, setLastMessage, setIsLoading, synthesizeSentence, playNextSentence, isAudioContextReady, isLoading]);
+
+  const showActive = isFocused || input || isListening;
 
   return (
-    <div className="absolute bottom-10 h-10 w-full max-w-lg px-5" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+    <div className="absolute bottom-8 w-full max-w-md px-6 z-20">
       <form onSubmit={handleSubmit}>
-        <div className={`flex w-full items-center overflow-hidden rounded-[12px] bg-white shadow transition-all duration-300 ${isHovered || input ? 'border-[rgb(196,191,228)] shadow-lg scale-105' : 'border-transparent'} border-2`}>
+        <div 
+          className={`
+            flex items-center gap-3 px-4 py-3
+            bg-white/10 backdrop-blur-xl
+            border border-white/20
+            rounded-2xl
+            transition-all duration-300 ease-out
+            ${showActive ? 'bg-white/15 border-white/30 shadow-lg shadow-black/5' : ''}
+          `}
+        >
+          {/* Mic Button */}
           <button
             type="button"
             onClick={toggleListening}
             disabled={isLoading}
             aria-label={isListening ? "Stop listening" : "Start listening"}
-            className={`p-1 rounded-full ${isListening ? 'bg-red-100' : 'hover:bg-gray-100'} mx-4`}
+            className={`
+              flex items-center justify-center
+              w-8 h-8 rounded-full
+              transition-all duration-200
+              ${isListening 
+                ? 'bg-red-500/20 text-red-400' 
+                : 'text-white/50 hover:text-white/80 hover:bg-white/10'
+              }
+            `}
           >
-            {isListening ? <FaMicrophoneSlash className="text-red-500" /> : <FaMicrophone className="text-gray-500 hover:text-gray-700" />}
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
           </button>
+
+          {/* Input */}
           <input
             ref={inputRef}
-            className="h-full w-full px-2 py-2 text-neutral-800 outline-none"
+            className="
+              flex-1 bg-transparent
+              text-white/90 text-sm
+              placeholder:text-white/40
+              outline-none
+            "
             type="text"
-            placeholder={isListening ? transcript || "Listening..." : "Enter your message..."}
+            placeholder={isListening ? (transcript || "Listening...") : "Message..."}
             value={input}
             onChange={handleInputChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSubmit(e as any)}
             disabled={isLoading}
             aria-label="Chat input"
           />
-          <button type="submit" disabled={isLoading} aria-label="Send message" className="mx-4">
-            <IoSend className="text-blue-400 transition-colors hover:text-blue-500" />
+
+          {/* Send Button */}
+          <button 
+            type="submit" 
+            disabled={isLoading || !input.trim()} 
+            aria-label="Send message"
+            className={`
+              flex items-center justify-center
+              w-8 h-8 rounded-full
+              transition-all duration-200
+              ${input.trim() 
+                ? 'bg-white/20 text-white hover:bg-white/30' 
+                : 'text-white/30 cursor-not-allowed'
+              }
+            `}
+          >
+            {isLoading ? (
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            ) : (
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="m5 12 7-7 7 7"/>
+                <path d="M12 19V5"/>
+              </svg>
+            )}
           </button>
         </div>
       </form>
