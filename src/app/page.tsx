@@ -71,18 +71,44 @@ export default function Page() {
 
   // Load Live2D Cubism SDK
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "/live2dcubismcore.min.js";
-    script.defer = true;
-    script.onload = () => setReady(true);
-    script.onerror = () => console.error("Failed to load Live2D Cubism SDK");
-    document.body.appendChild(script);
+    const loadSDK = async () => {
+      // Check if SDK is already loaded
+      if ((window as any).CubismCore) {
+        console.log("[v0] Cubism SDK already loaded");
+        setReady(true);
+        return;
+      }
 
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
+      try {
+        const script = document.createElement("script");
+        script.src = "/live2dcubismcore.min.js";
+        script.async = true;
+        
+        script.onload = () => {
+          console.log("[v0] Cubism SDK loaded successfully");
+          setReady(true);
+        };
+        
+        script.onerror = () => {
+          console.error("[v0] Failed to load Live2D Cubism SDK");
+          // Still set ready to show error UI
+          setReady(true);
+        };
+        
+        document.head.appendChild(script);
+        
+        return () => {
+          if (document.head.contains(script)) {
+            document.head.removeChild(script);
+          }
+        };
+      } catch (error) {
+        console.error("[v0] Error loading SDK:", error);
+        setReady(true);
       }
     };
+
+    loadSDK();
   }, []);
 
   // Initialize chat session

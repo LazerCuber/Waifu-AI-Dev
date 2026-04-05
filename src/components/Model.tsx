@@ -36,7 +36,17 @@ const SENSITIVITY = 0.95;
 const SMOOTHNESS = 0.08;
 const RECENTER_DELAY = 1500;
 
-const preloadModel = () => Live2DModel.from("/model/vanilla/vanilla.model3.json");
+const preloadModel = async () => {
+  try {
+    console.log("[v0] Attempting to load Live2D model from /model/vanilla/vanilla.model3.json");
+    const model = await Live2DModel.from("/model/vanilla/vanilla.model3.json");
+    console.log("[v0] Model loaded successfully:", model);
+    return model;
+  } catch (error) {
+    console.error("[v0] Failed to load model:", error);
+    throw error;
+  }
+};
 
 interface IdleState {
   breathPhase: number;
@@ -64,10 +74,12 @@ const Model = React.memo(() => {
   const [currentEmotion, setCurrentEmotion] = useAtom(currentEmotionAtom);
   const [isHeadpatActive, setIsHeadpatActive] = useAtom(isHeadpatActiveAtom);
   const [, setIsPoked] = useAtom(isPokedAtom);
+  const [, setError] = React.useState<string>("");
   
   const modelRef = useRef<any>(null);
   const appRef = useRef<Application | null>(null);
   const availableExpressionsRef = useRef<string[]>([]);
+  const isInitializedRef = useRef(false);
   
   // Mouse tracking state
   const mouseMoveRef = useRef({
@@ -116,11 +128,28 @@ const Model = React.memo(() => {
   // Set parameter safely
   const setParameter = useCallback((paramId: string, value: number) => {
     try {
-      if (modelRef.current?.internalModel?.coreModel) {
-        modelRef.current.internalModel.coreModel.setParameterValueById(paramId, value);
+      if (!modelRef.current) {
+        return;
       }
-    } catch {
-      // Parameter may not exist on this model
+      
+      // Try multiple methods to set parameter
+      const model = modelRef.current;
+      
+      // Method 1: Direct parameter value
+      if (model.internalModel?.coreModel?.setParameterValueById) {
+        model.internalModel.coreModel.setParameterValueById(paramId, value);
+      } 
+      // Method 2: Through animator
+      else if (model.animator?.targets) {
+        const target = model.animator.targets.find((t: any) => t.id === paramId);
+        if (target) target.value = value;
+      }
+      // Method 3: Fallback - set property directly
+      else if (model[paramId] !== undefined) {
+        model[paramId] = value;
+      }
+    } catch (error) {
+      // Silent fail - parameter may not exist on this model
     }
   }, []);
 
@@ -361,27 +390,53 @@ const Model = React.memo(() => {
     const initApp = async () => {
       if (!canvasRef.current) return;
 
-      const app = new Application({
-        view: canvasRef.current,
-        backgroundAlpha: 0,
-        resizeTo: window,
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-      });
-      appRef.current = app;
-
       try {
-        modelRef.current = await preloadModel();
-        app.stage.addChild(modelRef.current);
-        modelRef.current.anchor.set(0.5, 0.78);
+        // Prevent double initialization
+        if (isInitializedRef.current) {
+          console.log("[v0] Model already initialized, skipping...");
+          return;
+        }
+        isInitializedRef.current = true;
+
+        const app = new Application({
+          view: canvasRef.current,
+          backgroundAlpha: 0,
+          resizeTo: window,
+          resolution: window.devicePixelRatio || 1,
+          autoDensity: true,
+        });
+        appRef.current = app;
+
+        console.log("[v0] Loading Live2D model from /model/vanilla/vanilla.model3.json...");
+        
+        // Check if PIXI is available
+        if (!PIXI || !PIXI.Loader) {
+          console.warn("[v0] PIXI not fully loaded yet, retrying...");
+          isInitializedRef.current = false;
+          setTimeout(initApp, 500);
+          return;
+        }
+
+        const model = await preloadModel();
+        if (!model) {
+          const err = "Model loading failed - null model returned";
+          console.error("[v0]", err);
+          setError(err);
+          return;
+        }
+        
+        console.log("[v0] Model loaded successfully");
+        modelRef.current = model;
+        app.stage.addChild(model);
+        model.anchor.set(0.5, 0.78);
         updateModelSize();
 
         // Get available expressions
-        const expressionManager = modelRef.current.internalModel?.motionManager?.expressionManager;
+        const expressionManager = model.internalModel?.motionManager?.expressionManager;
         if (expressionManager?.definitions) {
           availableExpressionsRef.current = Object.keys(expressionManager.definitions);
-        } else if (modelRef.current.internalModel?.motionManager?.definitions?.expressions) {
-          availableExpressionsRef.current = modelRef.current.internalModel.motionManager.definitions.expressions.map(
+        } else if (model.internalModel?.motionManager?.definitions?.expressions) {
+          availableExpressionsRef.current = model.internalModel.motionManager.definitions.expressions.map(
             (e: any) => e.Name || e.name || e
           );
         }
@@ -395,10 +450,16 @@ const Model = React.memo(() => {
           updateModelSize();
         });
 
-        // Apply initial expression
-        applyExpression("neutral");
+        // Apply initial expression after a short delay
+        setTimeout(() => {
+          applyExpression("neutral");
+          console.log("[v0] Live2D model initialized successfully");
+        }, 300);
       } catch (error) {
-        console.error("Error setting up Live2D model:", error);
+        isInitializedRef.current = false;
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error("[v0] Error setting up Live2D model:", errorMsg);
+        setError(errorMsg);
       }
     };
 
@@ -452,11 +513,13 @@ const Model = React.memo(() => {
   }, [lastMessage, setCurrentEmotion, applyExpression, setParameter]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 h-full w-full"
-      style={{ touchAction: "none" }}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 h-full w-full"
+        style={{ touchAction: "none" }}
+      />
+    </>
   );
 });
 
